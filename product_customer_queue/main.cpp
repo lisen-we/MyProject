@@ -1,143 +1,25 @@
-#include "PCQueue.h"
-#include <atomic>
-#include <chrono>
+#include "sample1.h"
+#include "sample2.h"
+
 #include <iostream>
-#include <mutex>
 #include <string>
-#include <thread>
-#include <utility>
-#include <vector>
 
-struct Order {
-    int id = 0;
-    int terminal_id = 0;
-    std::string dish;
-};
-
-int main() {
-    PCQueue<Order> order_queue(3);
-
-    constexpr int terminal_count = 3;
-    constexpr int cook_count = 2;
-    constexpr int orders_per_terminal = 10;
-    constexpr int expected_order_count =
-        terminal_count * orders_per_terminal;
-
-    std::atomic<int> produced_count{0};
-    std::atomic<int> consumed_count{0};
-    std::atomic<int> blocked_push_count{0};
-
-    std::mutex output_mutex;
-    const auto print = [&output_mutex](const std::string& message) {
-        std::lock_guard<std::mutex> lock(output_mutex);
-        std::cout << message << std::endl;
-    };
-
-    const char* dishes[] = {
-        "Rice",
-        "Noodles",
-        "Soup",
-        "Hamburger"
-    };
-
-    // 消费者线程：厨师从订单队列中取订单并处理。
-    std::vector<std::thread> cooks;
-    for (int cook_id = 0; cook_id < cook_count; ++cook_id) {
-        auto cook_task = [&, cook_id]() {
-            Order order;
-            while (order_queue.pop(order)) {
-                print("Cook " + std::to_string(cook_id)
-                    + " started order " + std::to_string(order.id)
-                    + " (" + order.dish + ")");
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                ++consumed_count;
-
-                print("Cook " + std::to_string(cook_id)
-                    + " finished order " + std::to_string(order.id));
-            }
-
-            print("Cook " + std::to_string(cook_id) + " exited");
-        };
-
-        std::thread cook_thread(std::move(cook_task));
-        cooks.push_back(std::move(cook_thread));
+int main(int argc, char* argv[]) {
+    if (argc == 1) {
+        const bool sample1_passed = run_sample1();
+        const bool sample2_passed = run_sample2();
+        return sample1_passed && sample2_passed ? 0 : 1;
     }
 
-    // 生产者线程：点餐终端创建订单并插入队列。
-    std::vector<std::thread> terminals;
-    for (int terminal_id = 0;
-         terminal_id < terminal_count;
-         ++terminal_id) {
-        auto producer_task = [&, terminal_id]() {
-            for (int index = 0; index < orders_per_terminal; ++index) {
-                const int order_id =
-                    terminal_id * orders_per_terminal + index;
-
-                Order order{
-                    order_id,
-                    terminal_id,
-                    dishes[order_id % 4]
-                };
-
-                const auto push_start = std::chrono::steady_clock::now();
-                const bool success = order_queue.push(std::move(order));
-                const auto push_end = std::chrono::steady_clock::now();
-                const auto wait_time =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        push_end - push_start);
-
-                if (!success) {
-                    print("Terminal " + std::to_string(terminal_id)
-                        + " stopped because queue was closed");
-                    return;
-                }
-
-                if (wait_time.count() >= 20) {
-                    ++blocked_push_count;
-                }
-
-                ++produced_count;
-                print("Terminal " + std::to_string(terminal_id)
-                    + " submitted order " + std::to_string(order_id)
-                    + ", push waited " + std::to_string(wait_time.count())
-                    + " ms");
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            }
-        };
-
-        std::thread producer_thread(std::move(producer_task));
-        terminals.push_back(std::move(producer_thread));
+    const std::string sample_name = argv[1];
+    if (sample_name == "sample1") {
+        return run_sample1() ? 0 : 1;
     }
 
-    // 等待所有生产者结束后再关闭队列。
-    for (std::thread& terminal : terminals) {
-        terminal.join();
+    if (sample_name == "sample2") {
+        return run_sample2() ? 0 : 1;
     }
 
-    order_queue.shut_down();
-
-    // 消费者取完剩余订单后退出。
-    for (std::thread& cook : cooks) {
-        cook.join();
-    }
-
-    const bool passed =
-        produced_count == expected_order_count
-        && consumed_count == expected_order_count
-        && order_queue.empty()
-        && order_queue.is_shutdown();
-
-    std::cout << "\n========== Test Result ==========\n";
-    std::cout << "Expected orders: " << expected_order_count << '\n';
-    std::cout << "Produced orders: " << produced_count.load() << '\n';
-    std::cout << "Consumed orders: " << consumed_count.load() << '\n';
-    std::cout << "Blocked pushes : " << blocked_push_count.load() << '\n';
-    std::cout << "Queue empty    : " << std::boolalpha
-              << order_queue.empty() << '\n';
-    std::cout << "Test result    : "
-              << (passed ? "PASSED" : "FAILED") << '\n';
-
-    return passed ? 0 : 1;
+    std::cerr << "Usage: product_customer_queue [sample1|sample2]\n";
+    return 2;
 }

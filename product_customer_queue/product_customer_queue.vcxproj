@@ -147,9 +147,14 @@
 
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="sample1.cpp" />
+    <ClCompile Include="sample2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PCQueue.h" />
+    <ClInclude Include="PriorityPCQueue.h" />
+    <ClInclude Include="sample1.h" />
+    <ClInclude Include="sample2.h" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
