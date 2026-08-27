@@ -1,5 +1,4 @@
 #include "PCQueue.h"
-
 #include <atomic>
 #include <chrono>
 #include <iostream>
