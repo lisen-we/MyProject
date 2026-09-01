@@ -133,9 +133,11 @@
   <ItemGroup>
     <ClCompile Include="myString.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="String.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="myString.h" />
+    <ClInclude Include="String.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
