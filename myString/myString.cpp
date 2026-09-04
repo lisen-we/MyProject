@@ -1,5 +1,5 @@
 #include "myString.h"
-#include <memory>
+#include <cstring>
 hstring::size_t c_str_length(const char* str)
 {
 	if (str == nullptr) return 0;
@@ -205,11 +205,12 @@ size_t hstring::find(size_t pos, const hstring& target)const noexcept
 }
 hstring& hstring::replace(size_t pos, const hstring& target, const hstring& replacement)
 {
+	hstring temp(replacement);
 	size_t target_pos = find(pos,target);
 	if (target_pos == nopos) return *this;
 	//target_pos 是查找到的target的起始下标
 	erase(target_pos, target);
-	insert(target_pos, replacement);
+	insert(target_pos, temp);
 	return *this;
 }
 hstring& hstring::erase(size_t pos, const hstring& target)
@@ -233,12 +234,10 @@ hstring& hstring::insert(size_t pos, const hstring& target)
 	hstring temp(target);
 	//首先确保capacity的长度是足够的
 	ensure_capacity(size_ + temp.size_);
-	// 使用倒序循环的时候需要防止产生环。
-	// TODO: size_t 是无符号类型，i >= 0 恒成立；pos 为 0 时 i-- 会回绕为最大值，导致死循环和越界写入。
-	for (size_t i = size_; i >= pos&&i>=0; i--)
+	// 使用倒序循环的时候需要防止产生死循环
+	for (size_t i = size_ + 1; i > pos; --i)
 	{
-		//从后向前移动
-		data_[i + temp.size_] = data_[i];
+		data_[i + temp.size_ - 1] = data_[i - 1];
 	}
 	for (size_t j = 0; j < temp.size_; j++)
 	{
@@ -248,6 +247,57 @@ hstring& hstring::insert(size_t pos, const hstring& target)
 	size_ += temp.size();
 	return *this;
 }
-
-// TODO: 头文件已声明 operator+=、operator+、operator-=、operator-、operator[]、operator==、operator!=，
-//       但本 cpp 尚未提供定义；只要调用它们，链接阶段就会报“无法解析的外部符号”。
+hstring& hstring::operator+=(const hstring& other)
+{
+	//other可能==当前的hstring
+	hstring temp(other);
+	insert(size_, temp);
+	return *this;
+}
+hstring hstring::operator+(const hstring& other) const
+{
+	hstring result(*this);
+	result.insert(size_, other);
+	return result;
+}
+hstring& hstring::operator-=(const hstring& other)
+{
+	hstring temp(other);
+	erase(0, temp);
+	return *this;
+}
+hstring hstring::operator-(const hstring& other) const
+{
+	hstring result(*this);
+	result.erase(0, other);
+	return result;
+}
+char& hstring::operator[](size_t index)
+{
+	return data_[index];
+}
+const char& hstring::operator[](size_t index) const
+{
+	return data_[index];
+}
+bool hstring::operator==(const hstring& other) const
+{
+	if (size_ != other.size_) return false;
+	bool match = true;
+	for (size_t i = 0; i < size_; i++)
+	{
+		if (data_[i] != other.data_[i])
+			match = false;
+	}
+	return match;
+}
+bool hstring::operator!=(const hstring& other) const
+{
+	if (size_ != other.size_) return true;
+	for (size_t i = 0; i < size_; i++)
+	{
+		if (data_[i] != other.data_[i])
+			return true;
+	}
+	return false;
+}
