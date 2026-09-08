@@ -9,10 +9,10 @@ private:
 
 };
 
-sample1::sample1()
+inline sample1::sample1()
 {
 }
 
-sample1::~sample1()
+inline sample1::~sample1()
 {
 }
