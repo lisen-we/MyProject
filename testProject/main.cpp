@@ -3,7 +3,8 @@
 int main()
 {
 	using namespace std;
-	Vertification_class testClass;
+	Verification_class testClass;
 	cout << testClass.return_empty_class_size() << endl;
 	testClass.test_smart_ptr_memory_leak();
+	testClass.test_new_malloc_memory();
 }

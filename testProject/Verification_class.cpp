@@ -1,18 +1,18 @@
 #include "Verification_class.h"
-Vertification_class::Vertification_class()
+Verification_class::Verification_class()
 {
 
 }
 
-Vertification_class::~Vertification_class()
+Verification_class::~Verification_class()
 {
 }
-int Vertification_class::return_empty_class_size()
+int Verification_class::return_empty_class_size()
 {
 	sample1 A;
 	return sizeof(A);
 }
-void Vertification_class::test_smart_ptr_memory_leak()
+void Verification_class::test_smart_ptr_memory_leak()
 {
 	std::weak_ptr<sample2_A> observe_A;
 	std::weak_ptr<sample2_B> observe_B;
@@ -35,4 +35,22 @@ void Vertification_class::test_smart_ptr_memory_leak()
 	std::cout << std::boolalpha;
 	std::cout << "A 是否已销毁：" << observe_A.expired() << '\n';
 	std::cout << "B 是否已销毁：" << observe_B.expired() << '\n';
+}
+void Verification_class::test_new_malloc_memory()
+{
+	//new使用构造函数分配内存
+	int* p1 = new int(5);
+	std::cout << "Value allocated with new:" << *p1 << std::endl;
+	delete p1;
+	//malloc直接分配内存，再转换为int指针
+	int* p2 = (int*)malloc(sizeof(int));
+	if (p2 != nullptr)
+	{
+		*p2 = 10;
+		std::cout << "Value allocated with malloc " << *p2 << std::endl;
+		free(p2);
+	}
+	else {
+		std::cerr << "memory allocation failed " << std::endl;
+	}
 }

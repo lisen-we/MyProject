@@ -18,10 +18,28 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Verification_class.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Summary of C++.md">
       <Filter>源文件</Filter>
     </None>
+    <None Include="C++八股.pdf" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sample1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="sample2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Verification_class.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="sample3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
