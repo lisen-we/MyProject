@@ -4,7 +4,8 @@ int main()
 {
 	using namespace std;
 	Verification_class testClass;
-	cout << testClass.return_empty_class_size() << endl;
+	testClass.return_empty_class_size();
 	testClass.test_smart_ptr_memory_leak();
 	testClass.test_new_malloc_memory();
+	testClass.test_polymorphism_with_function_pointer();
 }
