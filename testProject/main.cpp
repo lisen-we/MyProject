@@ -8,4 +8,5 @@ int main()
 	testClass.test_smart_ptr_memory_leak();
 	testClass.test_new_malloc_memory();
 	testClass.test_polymorphism_with_function_pointer();
+	testClass.test_virtual_inheritance();
 }

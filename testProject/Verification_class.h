@@ -2,6 +2,7 @@
 #include "sample1.h"
 #include "sample2.h"
 #include "sample3.h"
+#include "sample4.h"
 #include <memory>
 #include <iostream>
 class Verification_class
@@ -13,6 +14,7 @@ public:
 	void test_smart_ptr_memory_leak();
 	void test_new_malloc_memory();
 	void test_polymorphism_with_function_pointer();
+	void test_virtual_inheritance();
 private:
 	
 };

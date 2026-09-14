@@ -4,12 +4,15 @@
 #include <vector>
 //不用虚函数而使用函数指针来实现多态
 struct Animal;
+using speak = void(*)(const Animal* self);
+using status = void(*)(const Animal* self);
+using information = void(*)(const Animal* self);
 struct animal_vtable
 {
 	//模拟的虚函数表
-	void (*speak)(const Animal* self);
-	void (*status)(const Animal* self);
-	void (*print_information)(const Animal* self);
+	speak speak_fun;
+	status status_fun;
+	information information_fun;
 };
 struct Animal
 {
@@ -90,15 +93,15 @@ inline void cat_init(Cat* cat, Date date, std::string name, std::size_t age)
 }
 inline void animal_information(Animal* a)
 {
-	a->vptr->print_information(a);
+	a->vptr->information_fun(a);
 }
 inline void animal_speak(Animal* a)
 {
-	a->vptr->speak(a);
+	a->vptr->speak_fun(a);
 }
 inline void animal_status(Animal* a)
 {
-	a->vptr->status(a);
+	a->vptr->status_fun(a);
 }
 inline int sample3_polymorphism_with_function_pointer()
 {
