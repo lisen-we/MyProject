@@ -100,3 +100,8 @@ void Verification_class::test_virtual_inheritance()
 	cout << "虚继承要点验证结果: " << (passed ? "通过" : "失败") << endl;
 	cout << std::string(20, '*') << endl << endl;
 }
+void Verification_class::test_diferent_param_function()
+{
+	foo(1);
+	foo(1.1);
+}
