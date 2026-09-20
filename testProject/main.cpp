@@ -10,4 +10,5 @@ int main()
 	testClass.test_polymorphism_with_function_pointer();
 	testClass.test_virtual_inheritance();
 	testClass.test_diferent_param_function();
+	testClass.test_deep_copy();
 }

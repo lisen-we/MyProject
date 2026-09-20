@@ -4,8 +4,10 @@
 #include "sample3.h"
 #include "sample4.h"
 #include "sample5.h"
+#include "sample6.h"
 #include <memory>
 #include <iostream>
+
 class Verification_class
 {
 public:
@@ -17,6 +19,8 @@ public:
 	void test_polymorphism_with_function_pointer();
 	void test_virtual_inheritance();
 	void test_diferent_param_function();
+	void test_deep_copy();
 private:
-	
+	void begin_test_case(const char* test_name) const;
+	void end_test_case() const;
 };

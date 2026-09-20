@@ -47,5 +47,8 @@
     <ClInclude Include="sample5.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="sample6.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

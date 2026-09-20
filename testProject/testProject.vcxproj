@@ -138,6 +138,7 @@
     <ClInclude Include="sample3.h" />
     <ClInclude Include="sample4.h" />
     <ClInclude Include="sample5.h" />
+    <ClInclude Include="sample6.h" />
     <ClInclude Include="Verification_class.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
