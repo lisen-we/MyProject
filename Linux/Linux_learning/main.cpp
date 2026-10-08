@@ -1,5 +1,7 @@
 ﻿#include <cerrno>
 #include <climits>
+#include <cstdarg>
+#include <cstdio>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
@@ -7,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 
-void type_conversion_fun()
+void str_to_num_fun()
 {
     long long_value = 0;
     int int_value = 0;
@@ -124,7 +126,7 @@ void type_conversion_fun()
     }
 }
 
-void str_to_num_fun()
+void num_to_str_fun()
 {
     // 函数名沿用学习示例；ecvt、fcvt、gcvt 的实际功能是将浮点数转换为字符串。
     int decimal_point = 0;
@@ -215,9 +217,110 @@ void str_to_num_fun()
     std::cout << "ostringstream fixed(3) for 12.34567: " << formatted_number.str() << '\n';
 }
 
+void stdarg_test(const char* format, ...)
+{
+    va_list arguments;
+    va_start(arguments, format);
+
+    // vprintf 会推进 va_list 的读取位置，因此为终端输出创建独立副本。
+    va_list print_arguments;
+    va_copy(print_arguments, arguments);
+    std::vprintf(format, print_arguments);
+    va_end(print_arguments);
+
+    char buffer[4096] = {};
+    // 为缓冲区格式化再次创建副本，并使用带长度限制的 vsnprintf 防止越界。
+    va_list buffer_arguments;
+    va_copy(buffer_arguments, arguments);
+    const int written = std::vsnprintf(buffer, sizeof(buffer), format, buffer_arguments);
+    va_end(buffer_arguments);
+    va_end(arguments);
+
+    if (written < 0)
+    {
+        std::perror("vsnprintf failed");
+        return;
+    }
+    if (static_cast<std::size_t>(written) >= sizeof(buffer))
+    {
+        std::cout << "test buffer output was truncated\n";
+        return;
+    }
+
+    // 输出缓冲区内容，验证 vprintf 和 vsnprintf 使用的是同一组可变参数。
+    std::cout << std::endl << "test buffer: " << buffer;
+}
+
+void print_fun()
+{
+    const int integer_value = 1;
+    const unsigned int unsigned_value = 2U;
+    const long long_value = 3L;
+    const long long long_long_value = 4LL;
+    const double floating_value = 0.00001;
+
+    std::printf("hello world\n");
+
+    // 每个占位符都与参数类型对应，避免可变参数类型不匹配造成未定义行为。
+    std::printf("%%d=%d, %%u=%u, %%ld=%ld, %%lld=%lld\n",
+                integer_value, unsigned_value, long_value, long_long_value);
+    // 同一 double 使用三种格式输出：普通小数、科学计数法和紧凑格式。
+    std::printf("%%f=%f, %%e=%e, %%g=%g\n",
+                floating_value, floating_value, floating_value);
+    std::printf("%%s=%s\n", "hello world");
+
+    char buffer[128] = {};
+    // snprintf 会限制写入长度，并返回“理论上需要写入”的字符数（不含结尾空字符）。
+    const int written = std::snprintf(buffer, sizeof(buffer), "%s %d %.6f\n",
+                                      "yidaoyun", 100, 100.00001);
+    if (written < 0)
+    {
+        std::perror("snprintf failed");
+        return;
+    }
+    if (static_cast<std::size_t>(written) >= sizeof(buffer))
+    {
+        std::cout << "snprintf output was truncated\n";
+    }
+    else
+    {
+        std::cout << "snprintf wrote " << written << " characters: " << buffer;
+    }
+
+    // 文件写入不会显示在终端；test.txt 位于远端 Linux 程序的当前工作目录。
+    std::FILE* file = std::fopen("test.txt", "w+");
+    if (file == nullptr)
+    {
+        std::perror("fopen test.txt failed");
+        return;
+    }
+
+    if (std::fprintf(file, "%s %d %.6f\n", "yidaoyun", 100, 100.00001) < 0)
+    {
+        std::perror("fprintf test.txt failed");
+    }
+    if (std::fclose(file) != 0)
+    {
+        std::perror("fclose test.txt failed");
+    }
+    stdarg_test("%%d=%d, %%u=%u, %%ld=%ld, %%lld=%lld\n",
+        integer_value, unsigned_value, long_value, long_long_value);
+}
+
+void scanf_fun()
+{
+    char c;
+    int d;
+    double f;
+    //输入是空格可有可无（整数小数之间必须要有），如果采用了其他的分隔符则输入必须要有
+    scanf("%c%d%f", &c, &d, &f);
+    stdarg_test("inputchar = %c inputint = %d inputdouble = %lf", c, d, f);
+}
 int main()
 {
-    type_conversion_fun();
-    str_to_num_fun();
+    //num_to_str_fun();
+    //str_to_num_fun();
+	//print_fun();
+    scanf_fun();
     return 0;
 }
