@@ -8,6 +8,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <cstring>
+#include <setjmp.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include<fcntl.h>
@@ -422,6 +424,8 @@ void IO_fun()
     const int fd = ::open(file_name, O_RDWR | O_CREAT | O_TRUNC, 0644); //权限是8进制的，必须要加上一个0
     if (fd == -1)
     {
+        //std::perror的作用大致等于提供的提示文字 + 当前 errno 对应的错误说明
+        //std::cerr << "open io_demo.txt failed"<< ": "<< std::strerror(errno)<< '\n';
         std::perror("open io_demo.txt failed");
         return;
     }
@@ -515,16 +519,186 @@ void IO_fun()
     }
 }
 
+// atexit() 只接受无参数回调，因此使用独立函数作为示例。
+void process_atexit_handler()
+{
+    std::puts("atexit callback: executed during normal exit");
+}
+
+// on_exit() 会把 exit(status) 的状态码和注册时提供的 arg 原样传回。
+void process_on_exit_handler(int status, void* arg)
+{
+    const char* label = static_cast<const char*>(arg);
+    std::printf("on_exit callback: status=%d, arg=%s\n", status, label);
+}
+
+void process_group_priority_fun()
+{
+    std::cout << "\n--- process ID / process group example ---\n";
+
+    // getpid() 无参数，返回当前进程的 PID；getppid() 无参数，返回创建当前进程的父进程 PID。
+    const pid_t current_pid = ::getpid();
+    std::cout << "getpid(): " << current_pid << ", getppid(): " << ::getppid() << '\n';
+
+    // getpgid(pid)：pid 为要查询的进程 PID；这里传入当前进程的 current_pid（传入 0 也表示当前进程）。
+    const pid_t group_id_by_pid = ::getpgid(current_pid);
+    if (group_id_by_pid == -1)
+    {
+        std::perror("getpgid(current_pid) failed");
+        return;
+    }
+
+    // getpgrp() 无参数，直接返回当前进程的进程组 ID，等价于 getpgid(0)。
+    std::cout << "getpgid(current_pid): " << group_id_by_pid
+              << ", getpgrp(): " << ::getpgrp() << '\n';
+
+    const auto print_current_priority = [](const char* stage)
+    {
+        // getpriority() 成功时允许返回 -1（nice 值 -1 合法），所以必须在调用前清零 errno。
+        errno = 0;
+        // which=PRIO_PROCESS：按进程查询；who=0：当前进程。
+        const int priority = ::getpriority(PRIO_PROCESS, 0);
+        if (priority == -1 && errno != 0)
+        {
+            std::perror("getpriority(PRIO_PROCESS, 0) failed");
+            return false;
+        }
+
+        // nice 值范围通常为 -20 到 19；值越小，调度优先级越高。
+        std::cout << stage << ": nice value=" << priority << '\n';
+        return true;
+    };
+
+    std::cout << "\n--- getpriority example ---\n";
+    if (!print_current_priority("parent"))
+    {
+        return;
+    }
+
+    const auto wait_for_child = [](pid_t child_pid, const char* example_name)
+    {
+        int status = 0;
+        if (::waitpid(child_pid, &status, 0) == -1)
+        {
+            std::perror("waitpid failed");
+        }
+        else if (WIFEXITED(status))
+        {
+            std::cout << "parent: " << example_name << " child exited with code "
+                      << WEXITSTATUS(status) << '\n';
+        }
+        else if (WIFSIGNALED(status))
+        {
+            std::cout << "parent: " << example_name << " child was terminated by signal "
+                      << WTERMSIG(status) << '\n';
+        }
+    };
+
+    const auto run_group_change_example = [&wait_for_child](bool use_setpgrp)
+    {
+        const char* api_name = use_setpgrp ? "setpgrp" : "setpgid";
+        std::cout << "\n--- " << api_name << " example (child only) ---\n" << std::flush;
+
+        const pid_t child_pid = ::fork();
+        if (child_pid == -1)
+        {
+            std::perror("fork failed");
+            return;
+        }
+
+        if (child_pid == 0)
+        {
+            std::cout << "child before change: pid=" << ::getpid()
+                      << ", pgid=" << ::getpgrp() << '\n';
+
+            // setpgid(pid, pgid)：pid=0 表示当前进程；pgid=0 表示使用当前进程 PID 作为新进程组 ID。
+            // 新子进程通常不是进程组组长，因此可安全创建一个以自身 PID 为 ID 的新进程组。
+            // Linux 的 setpgrp() 无参数，等价于 setpgid(0, 0)，但可移植性较弱，因此生产代码通常优先使用 setpgid()。
+            const int result = use_setpgrp ? ::setpgrp() : ::setpgid(0, 0);
+            if (result == -1)
+            {
+                std::perror(api_name);
+                _exit(EXIT_FAILURE);
+            }
+
+            std::cout << "child after " << api_name << ": pid=" << ::getpid()
+                      << ", pgid=" << ::getpgrp() << '\n' << std::flush;
+            _exit(EXIT_SUCCESS);
+        }
+
+        wait_for_child(child_pid, api_name);
+    };
+
+    // 分别演示 setpgid(pid, pgid) 和 Linux 的无参 setpgrp()；二者只影响各自的子进程。
+    run_group_change_example(false);
+    run_group_change_example(true);
+
+    std::cout << "\n--- setpriority / nice example (child only) ---\n" << std::flush;
+    const pid_t priority_child_pid = ::fork();
+    if (priority_child_pid == -1)
+    {
+        std::perror("fork failed");
+        return;
+    }
+
+    if (priority_child_pid == 0)
+    {
+        if (!print_current_priority("child before changing priority"))
+        {
+            _exit(EXIT_FAILURE);
+        }
+
+        errno = 0;
+        const int current_priority = ::getpriority(PRIO_PROCESS, 0);
+        if (current_priority == -1 && errno != 0)
+        {
+            std::perror("getpriority before setpriority failed");
+            _exit(EXIT_FAILURE);
+        }
+
+        // setpriority(which, who, prio)：PRIO_PROCESS 表示进程，who=0 表示当前子进程。
+        // 将 nice 值增大 1 会降低调度优先级，普通用户通常有权限执行；最大值为 19。
+        const int requested_priority = current_priority < 19 ? current_priority + 1 : 19;
+        if (::setpriority(PRIO_PROCESS, 0, requested_priority) == -1)
+        {
+            std::perror("setpriority(PRIO_PROCESS, 0, requested_priority) failed");
+            _exit(EXIT_FAILURE);
+        }
+        print_current_priority("child after setpriority");
+
+        // nice(inc)：inc 是在当前 nice 值上的增量；这里传入 1，同样表示降低当前子进程的调度优先级。
+        // 成功时可能返回 -1（新的 nice 值恰好为 -1），因此仍需结合 errno 判断是否真的失败。
+        errno = 0;
+        const int nice_result = ::nice(1);
+        if (nice_result == -1 && errno != 0)
+        {
+            std::perror("nice(1) failed");
+            _exit(EXIT_FAILURE);
+        }
+        std::cout << "nice(1) returned: " << nice_result << '\n';
+        print_current_priority("child after nice(1)");
+        std::cout << std::flush;
+        _exit(EXIT_SUCCESS);
+    }
+
+    wait_for_child(priority_child_pid, "setpriority / nice");
+}
+
 void process_control_fun()
 {
     // exec*() 成功后不会返回：它会用新程序替换当前子进程的代码、数据和栈。
     // 因此每个示例都先 fork()，避免替换正在运行的主程序。
     enum class ExecExample
     {
+        // l（list）：可执行程序的参数以可变参数列表形式逐个传入，最后以 nullptr 结束。
         Execl,
+        // l + e（environment）：可变参数列表末尾额外提供 envp 环境变量数组。
         Execle,
+        // v（vector）：可执行程序的参数以 argv 字符串指针数组传入，继承当前进程环境。
         Execv,
+        // v + e：同时显式传入 argv 参数数组和 envp 环境变量数组；不会继承当前进程环境。
         Execve,
+        // v + p（PATH）：参数通过 argv 传入，并按 PATH 环境变量搜索程序名称。
         Execvp
     };
 
@@ -533,6 +707,10 @@ void process_control_fun()
         std::cout << "\n--- " << api_name << " example ---\n" << std::flush;
 
         const pid_t child_pid = ::fork();
+        //调用fork的返回值：
+        // child_pid>0 父进程，返回值是新创建的子进程 PID
+        // child_pid==0 子进程
+        // child_pid<0 调用失败
         if (child_pid == -1)
         {
             std::perror("fork failed");
@@ -545,6 +723,7 @@ void process_control_fun()
             {
             case ExecExample::Execl:
                 // l 表示参数以列表（list）形式传入；最后一个 nullptr 是参数列表结束标志。
+                // argv的第一个参数一定要是命令本身
                 ::execl("/bin/echo", "echo", "message from execl", static_cast<char*>(nullptr));
                 break;
 
@@ -618,6 +797,101 @@ void process_control_fun()
     run_example("execv", ExecExample::Execv);
     run_example("execve", ExecExample::Execve);
     run_example("execvp", ExecExample::Execvp);
+
+    const auto run_termination_example = [](bool use_exit)
+    {
+        const char* api_name = use_exit ? "exit" : "_exit";
+        std::cout << "\n--- " << api_name << " / atexit / on_exit example ---\n" << std::flush;
+
+        const pid_t child_pid = ::fork();
+        if (child_pid == -1)
+        {
+            std::perror("fork failed");
+            return;
+        }
+
+        if (child_pid == 0)
+        {
+            // atexit() 的参数是 void (*)()：注册成功后，正常调用 exit() 时会执行该回调。
+            if (std::atexit(process_atexit_handler) != 0)
+            {
+                std::fputs("atexit registration failed\n", stderr);
+                _exit(127);
+            }
+
+            // on_exit() 是 Linux/glibc 扩展，不属于 ISO C++ 标准。
+            // 参数依次为：回调函数、调用 exit() 时传回给回调的自定义参数。
+            char callback_argument[] = "registered in child";
+            if (::on_exit(process_on_exit_handler, callback_argument) != 0)
+            {
+                std::fputs("on_exit registration failed\n", stderr);
+                _exit(127);
+            }
+
+            if (use_exit)
+            {
+                // status=42：结束状态。父进程通过 WEXITSTATUS(status) 可取得该值。
+                // exit() 会调用已注册回调，并刷新 C 标准 I/O 流后正常结束。
+                std::cout << "child: calling exit(42)\n" << std::flush;
+                std::exit(42);
+            }
+
+            // _exit(43) 立即结束：不会执行 atexit/on_exit 回调，也不会刷新 C 标准 I/O 缓冲区。
+            // 因此这里显式 flush，保证这条演示消息在 _exit() 前已输出。
+            std::cout << "child: calling _exit(43), callbacks will be skipped\n" << std::flush;
+            _exit(43);
+        }
+
+        // 父进程读取子进程结束状态，验证 exit(42) 和 _exit(43) 均可传递状态码。
+        int status = 0;
+        if (::waitpid(child_pid, &status, 0) == -1)
+        {
+            std::perror("waitpid failed");
+        }
+        else if (WIFEXITED(status))
+        {
+            std::cout << "parent: " << api_name << " child exited with code "
+                      << WEXITSTATUS(status) << '\n';
+        }
+    };
+
+    // 为避免 exit() 或 _exit() 直接结束主程序，两个终止函数均在各自的子进程中演示。
+    run_termination_example(true);
+    run_termination_example(false);
+
+    std::cout << "\n--- setjmp / longjmp example ---\n";
+    jmp_buf jump_environment;
+    // setjmp(environment) 首次执行时返回 0，并把当前调用环境保存到 environment 中。
+    if (::setjmp(jump_environment) == 0)
+    {
+        std::cout << "setjmp first return: 0; calling longjmp(environment, 7)\n";
+        // value=7：跳回 setjmp() 位置后，setjmp() 的第二次返回值为 7；value 不应传 0。
+        ::longjmp(jump_environment, 7);
+    }
+    else
+    {
+        std::cout << "longjmp completed: setjmp returned 7\n";
+    }
+
+    std::cout << "\n--- sigsetjmp / siglongjmp example ---\n";
+    sigjmp_buf signal_jump_environment;
+    // save_mask=1：除保存执行环境外，也保存当前线程的信号屏蔽字。
+    if (::sigsetjmp(signal_jump_environment, 1) == 0)
+    {
+        std::cout << "sigsetjmp first return: 0; calling siglongjmp(environment, 9)\n";
+        // value=9：跳回 sigsetjmp() 后返回 9；同时恢复之前保存的信号屏蔽字。
+        ::siglongjmp(signal_jump_environment, 9);
+    }
+    else
+    {
+        std::cout << "siglongjmp completed: sigsetjmp returned 9\n";
+    }
+
+    // 注意：longjmp/siglongjmp 会跳过中间代码；不要跨越含非平凡析构函数的 C++ 自动对象，
+    // 否则析构函数不会执行，可能导致资源泄漏。它们不用于改变进程优先级。
+
+    // 继续演示进程标识、进程组和 nice 优先级相关接口。
+    process_group_priority_fun();
 }
 
 int main()
@@ -628,7 +902,7 @@ int main()
     //scanf_fun();
     //get_uid();
     //set_sid();
-    IO_fun();
-    //process_control_fun();
+    //IO_fun();
+    process_control_fun();
     return 0;
 }
