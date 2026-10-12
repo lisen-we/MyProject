@@ -50,22 +50,22 @@ int main()
     // 【C 文件流与文件描述符互转】知识点：fopen、fileno、fdopen、fflush、fclose。
     // 参数：无；函数会创建或清空 /home/lisen/fopen_demo.txt 与 /home/lisen/fdopen_demo.txt。
     // 需掌握：FILE* 与 fd 的关系；fdopen 成功后由 fclose 关闭 fd，不能重复调用 close。
-    // file_stream_fun();
+     file_stream_fun();
 
     // 【exec 与进程终止】知识点：fork、exec*、waitpid、exit/_exit、setjmp/sigsetjmp。
     // 参数：无；内部使用 echo/env 作为安全的目标程序，并在子进程中演示终止行为。
     // 需掌握：exec 成功不会返回；父进程必须使用 waitpid 回收指定子进程。
-    process_control_fun();
+    //process_control_fun();
 
     // 【进程组与优先级】知识点：getpgid/getpgrp、setpgid/setpgrp、getpriority/setpriority/nice。
     // 参数：无；会在子进程中改变进程组和 nice 值，避免影响当前终端。
     // 需掌握：nice 值越小优先级越高；getpriority 返回 -1 时需结合 errno 判断。
-    process_group_priority_fun();
+    //process_group_priority_fun();
 
     // 【等待任意子进程】知识点：wait、SIGCHLD、僵尸进程、WIFEXITED/WEXITSTATUS。
     // 参数：无；子进程以退出码 24 结束，父进程通过 wait 解析状态字。
     // 需掌握：wait 等待任意子进程，waitpid 可指定目标 PID。
-    wait_fun();
+    //wait_fun();
 
     return 0;
 }

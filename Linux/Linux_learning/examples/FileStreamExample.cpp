@@ -19,7 +19,7 @@ void file_stream_fun()
         std::perror("fopen fopen_demo.txt failed");
         return;
     }
-
+    printf("%s(%d):%s\n", __FILE__, __LINE__, __FUNCTION__);
     const char* stdio_text = "text written through FILE*\n";
     if (std::fputs(stdio_text, stream) == EOF)
     {
