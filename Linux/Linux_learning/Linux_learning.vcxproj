@@ -60,7 +60,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Remote_GCC_1_0</PlatformToolset>
-    <RemoteRootDir>/home/lisen/projects</RemoteRootDir>
+    <RemoteRootDir>~/projects</RemoteRootDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -77,7 +77,33 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="examples\FileIoExample.cpp" />
+    <ClCompile Include="examples\FileStreamExample.cpp" />
+    <ClCompile Include="examples\IdentityExample.cpp" />
+    <ClCompile Include="examples\NumberToStringExample.cpp" />
+    <ClCompile Include="examples\PrintExample.cpp" />
+    <ClCompile Include="examples\ProcessControlExample.cpp" />
+    <ClCompile Include="examples\ProcessGroupPriorityExample.cpp" />
+    <ClCompile Include="examples\ScanfExample.cpp" />
+    <ClCompile Include="examples\SessionExample.cpp" />
+    <ClCompile Include="examples\StringToNumberExample.cpp" />
+    <ClCompile Include="examples\VariadicExample.cpp" />
+    <ClCompile Include="examples\WaitExample.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="examples\FileIoExample.h" />
+    <ClInclude Include="examples\FileStreamExample.h" />
+    <ClInclude Include="examples\IdentityExample.h" />
+    <ClInclude Include="examples\NumberToStringExample.h" />
+    <ClInclude Include="examples\PrintExample.h" />
+    <ClInclude Include="examples\ProcessControlExample.h" />
+    <ClInclude Include="examples\ProcessGroupPriorityExample.h" />
+    <ClInclude Include="examples\ScanfExample.h" />
+    <ClInclude Include="examples\SessionExample.h" />
+    <ClInclude Include="examples\StringToNumberExample.h" />
+    <ClInclude Include="examples\VariadicExample.h" />
+    <ClInclude Include="examples\WaitExample.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />
