@@ -1,5 +1,6 @@
 #include "examples/FileIoExample.h"
 #include "examples/FileStreamExample.h"
+#include "examples/DirectoryExample.h"
 #include "examples/IdentityExample.h"
 #include "examples/NumberToStringExample.h"
 #include "examples/PrintExample.h"
@@ -47,10 +48,15 @@ int main()
     // 需掌握：处理部分写入、EINTR、文件偏移量和资源关闭。
     // IO_fun();
 
-    // 【C 文件流与文件描述符互转】知识点：fopen、fileno、fdopen、fflush、fclose。
-    // 参数：无；函数会创建或清空 /home/lisen/fopen_demo.txt 与 /home/lisen/fdopen_demo.txt。
-    // 需掌握：FILE* 与 fd 的关系；fdopen 成功后由 fclose 关闭 fd，不能重复调用 close。
+    // 【C 文件流与二进制记录】知识点：fopen、fileno、fdopen、ftell、fgetpos/fsetpos、fwrite/fread、feof/clearerr、fflush、fclose。
+    // 参数：无；函数会创建或清空 fopen_demo.txt、fdopen_demo.txt 和 student_record.bin。
+    // 需掌握：FILE* 与 fd 的关系；fread/fwrite 只适合平凡可复制类型，不能直接保存 std::string 等对象。
      file_stream_fun();
+
+    // 【目录与目录项处理】知识点：mkdir、opendir/readdir/closedir、rmdir、remove、chown、chmod、unlink、umask。
+    // 参数：无；函数在 /tmp 创建唯一测试目录，完成后删除本示例创建的文件和空目录。
+    // 需掌握：rmdir/remove 删除目录时目录必须为空；普通用户不能随意 chown 为其他用户。
+    // directory_fun();
 
     // 【exec 与进程终止】知识点：fork、exec*、waitpid、exit/_exit、setjmp/sigsetjmp。
     // 参数：无；内部使用 echo/env 作为安全的目标程序，并在子进程中演示终止行为。
