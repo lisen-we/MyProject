@@ -60,7 +60,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>Remote_GCC_1_0</PlatformToolset>
-    <RemoteRootDir>/home/lisen/projects</RemoteRootDir>
+    <RemoteRootDir>~/root/projects</RemoteRootDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -91,6 +91,7 @@
     <ClCompile Include="examples\VariadicExample.cpp" />
     <ClCompile Include="examples\WaitExample.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="socket_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="examples\DirectoryExample.h" />
@@ -106,6 +107,7 @@
     <ClInclude Include="examples\StringToNumberExample.h" />
     <ClInclude Include="examples\VariadicExample.h" />
     <ClInclude Include="examples\WaitExample.h" />
+    <ClInclude Include="socket_test.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />
