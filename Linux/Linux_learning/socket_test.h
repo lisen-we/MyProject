@@ -2,4 +2,10 @@
 #include<arpa/inet.h>  //htons,htonl,ntohs,ntohl,inet_pton,inet_ntop()等函数
 #include<sys/socket.h>  //socket,bind,listen,accept,connect等函数
 #include<netinet/in.h>	//sockaddr_in,AF_INET等
+#include <unistd.h>    //close函数
+#include<iostream>
+#include<cstring>
+#include<sys/wait.h>
 void socket_test();
+void server_test();
+void TCP_test();

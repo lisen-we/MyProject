@@ -10,7 +10,7 @@
 #include "examples/SessionExample.h"
 #include "examples/StringToNumberExample.h"
 #include "examples/WaitExample.h"
-
+#include "./socket_test.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -51,7 +51,7 @@ int main()
     // 【C 文件流与二进制记录】知识点：fopen、fileno、fdopen、ftell、fgetpos/fsetpos、fwrite/fread、feof/clearerr、fflush、fclose。
     // 参数：无；函数会创建或清空 fopen_demo.txt、fdopen_demo.txt 和 student_record.bin。
     // 需掌握：FILE* 与 fd 的关系；fread/fwrite 只适合平凡可复制类型，不能直接保存 std::string 等对象。
-     file_stream_fun();
+     //file_stream_fun();
 
     // 【目录与目录项处理】知识点：mkdir、opendir/readdir/closedir、rmdir、remove、chown、chmod、unlink、umask。
     // 参数：无；函数在 /tmp 创建唯一测试目录，完成后删除本示例创建的文件和空目录。
@@ -72,6 +72,6 @@ int main()
     // 参数：无；子进程以退出码 24 结束，父进程通过 wait 解析状态字。
     // 需掌握：wait 等待任意子进程，waitpid 可指定目标 PID。
     //wait_fun();
-
+    TCP_test();
     return 0;
 }
