@@ -77,6 +77,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="EchoServer.cpp" />
     <ClCompile Include="examples\DirectoryExample.cpp" />
     <ClCompile Include="examples\FileIoExample.cpp" />
     <ClCompile Include="examples\FileStreamExample.cpp" />
@@ -94,6 +95,7 @@
     <ClCompile Include="socket_test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="examples\EchoServerExample.h" />
     <ClInclude Include="examples\DirectoryExample.h" />
     <ClInclude Include="examples\FileIoExample.h" />
     <ClInclude Include="examples\FileStreamExample.h" />
@@ -107,7 +109,7 @@
     <ClInclude Include="examples\StringToNumberExample.h" />
     <ClInclude Include="examples\VariadicExample.h" />
     <ClInclude Include="examples\WaitExample.h" />
-    <ClInclude Include="socket_test.h" />
+    <ClInclude Include="examples\SocketTestExample.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="test.txt" />

@@ -1,4 +1,4 @@
-#include "examples/FileIoExample.h"
+﻿#include "examples/FileIoExample.h"
 #include "examples/FileStreamExample.h"
 #include "examples/DirectoryExample.h"
 #include "examples/IdentityExample.h"
@@ -10,7 +10,8 @@
 #include "examples/SessionExample.h"
 #include "examples/StringToNumberExample.h"
 #include "examples/WaitExample.h"
-#include "./socket_test.h"
+#include "examples/SocketTestExample.h"
+#include "examples/EchoServerExample.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -72,6 +73,19 @@ int main()
     // 参数：无；子进程以退出码 24 结束，父进程通过 wait 解析状态字。
     // 需掌握：wait 等待任意子进程，waitpid 可指定目标 PID。
     //wait_fun();
-    TCP_test();
+    // 【单次 TCP 通信】知识点：socket、bind、listen、accept、connect、read/write、close、fork。
+    // 参数：无；父进程在本机 9527 端口启动服务端，子进程连接后接收一条问候消息。
+    // 需掌握：连接建立的基本流程，以及监听 Socket 与已连接 Socket 的区别。
+    //TCP_test();
+
+    // 【多客户端 TCP 通信】知识点：fork、socket、bind、listen、accept、connect、read/write、close。
+    // 参数：无；父进程依次处理三个本机客户端连接，子进程连续创建三个客户端并发送消息。
+    // 需掌握：TCP 字节流可能发生部分读写，且每个已连接 Socket 都应在使用后关闭。
+    //TCPV1();
+
+    // 【交互式 TCP 回声服务】知识点：fork、socket、bind、listen、accept、connect、read/write、shutdown。
+    // 参数：无；父进程在本机 9527 端口运行回声服务，子进程从终端读取内容并回显，输入 quit 退出。
+    // 需掌握：一个 TCP 连接可连续收发多条消息；read() 的返回字节数才是有效数据长度。
+    EchoServe();
     return 0;
 }
