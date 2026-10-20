@@ -11,9 +11,9 @@
 #include <chrono>
 #include <cstdio>
 #include <cerrno>
-std::atomic<bool> server_status{ true };
 namespace
 {
+	std::atomic<bool> server_status{ true };
 	bool write_all(int fd, const char* data, std::size_t size)
 	{
 		std::size_t total = 0;

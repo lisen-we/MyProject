@@ -12,6 +12,7 @@
 #include "examples/WaitExample.h"
 #include "examples/SocketTestExample.h"
 #include "examples/EchoServerExample.h"
+#include "examples/CalculationServer.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -86,6 +87,8 @@ int main()
     // 【交互式 TCP 回声服务】知识点：fork、socket、bind、listen、accept、connect、read/write、shutdown。
     // 参数：无；父进程在本机 9527 端口运行回声服务，子进程从终端读取内容并回显，输入 quit 退出。
     // 需掌握：一个 TCP 连接可连续收发多条消息；read() 的返回字节数才是有效数据长度。
-    EchoServe();
+    //EchoServe();
+
+    calculationServerTest();
     return 0;
 }
