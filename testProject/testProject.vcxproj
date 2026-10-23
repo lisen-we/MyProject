@@ -126,20 +126,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Verification_class.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="C++八股.pdf" />
     <None Include="Summary of C++.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="sample1.h" />
-    <ClInclude Include="sample2.h" />
-    <ClInclude Include="sample3.h" />
-    <ClInclude Include="sample4.h" />
-    <ClInclude Include="sample5.h" />
-    <ClInclude Include="sample6.h" />
-    <ClInclude Include="Verification_class.h" />
+    <ClInclude Include="test_functions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

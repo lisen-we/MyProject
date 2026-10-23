@@ -1,14 +1,18 @@
-#include <iostream>	
-#include "Verification_class.h"
+#include "test_functions.h"
+
 int main()
 {
-	using namespace std;
-	Verification_class testClass;
-	testClass.return_empty_class_size();
-	testClass.test_smart_ptr_memory_leak();
-	testClass.test_new_malloc_memory();
-	testClass.test_polymorphism_with_function_pointer();
-	testClass.test_virtual_inheritance();
-	testClass.test_diferent_param_function();
-	testClass.test_deep_copy();
+	/*test_empty_class_size();
+	test_shared_ptr_circular_reference();
+	test_new_and_malloc();
+	test_function_pointer_polymorphism();
+	test_virtual_inheritance();
+	test_function_overload();
+	test_value_copy_and_alias();*/
+
+	// Run this test by itself because it intentionally invokes undefined behavior.
+	// test_unsafe_vector_concurrent_insert();
+	//test_map_and_unorder_map();
+	test_vector_shrink_to_fit();
+	return 0;
 }

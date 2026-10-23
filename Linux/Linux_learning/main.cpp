@@ -13,6 +13,7 @@
 #include "examples/SocketTestExample.h"
 #include "examples/EchoServerExample.h"
 #include "examples/CalculationServer.h"
+#include "examples/EchoServer_UDP.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -89,6 +90,7 @@ int main()
     // 需掌握：一个 TCP 连接可连续收发多条消息；read() 的返回字节数才是有效数据长度。
     //EchoServe();
 
-    calculationServerTest();
+    //calculationServerTest();
+    EchoServeUDP();
     return 0;
 }

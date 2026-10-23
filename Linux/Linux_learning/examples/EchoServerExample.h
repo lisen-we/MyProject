@@ -1,2 +1,2 @@
 ﻿#pragma once
-void EchoServe();
+void EchoServe(int argc,char* argv[]);

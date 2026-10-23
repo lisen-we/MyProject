@@ -80,6 +80,7 @@
     <ClCompile Include="EchoServer.cpp" />
     <ClCompile Include="examples\CalculationServer.cpp" />
     <ClCompile Include="examples\DirectoryExample.cpp" />
+    <ClCompile Include="examples\EchoServer_UDP.cpp" />
     <ClCompile Include="examples\FileIoExample.cpp" />
     <ClCompile Include="examples\FileStreamExample.cpp" />
     <ClCompile Include="examples\IdentityExample.cpp" />
@@ -99,6 +100,7 @@
     <ClInclude Include="examples\CalculationServer.h" />
     <ClInclude Include="examples\EchoServerExample.h" />
     <ClInclude Include="examples\DirectoryExample.h" />
+    <ClInclude Include="examples\EchoServer_UDP.h" />
     <ClInclude Include="examples\FileIoExample.h" />
     <ClInclude Include="examples\FileStreamExample.h" />
     <ClInclude Include="examples\IdentityExample.h" />
