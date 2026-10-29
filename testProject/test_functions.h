@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <queue>
+#include <utility>
 namespace test_detail
 {
 inline void begin_test_case(const char* test_name)
@@ -347,4 +349,129 @@ inline void test_vector_shrink_to_fit()
 	std::cout << "size:" << vec.size() << " capacity: " << vec.capacity() << std::endl;
 	vec.shrink_to_fit();
 	std::cout << "size:" << vec.size() << " capacity: " << vec.capacity() << std::endl;
+}
+
+inline void test_emplace()
+{
+	std::vector<std::pair<int, std::string>> vec;
+	vec.emplace(vec.end(),1,"abc");
+	vec.emplace_back(2, "abc");
+	for (auto& pair : vec)
+	{
+		std::cout << pair.first << " " << pair.second << std::endl;
+	}
+}
+
+inline void test_iterator()
+{
+	std::vector<int> vec;
+	vec.emplace_back(1);
+	vec.emplace_back(2);
+	vec.emplace_back(3);
+	std::cout << "capacity" << vec.capacity() << std::endl;
+	auto it = vec.begin();
+	std::cout << "begin: " << *it << std::endl;
+	vec.pop_back();
+	//迭代器没有失效
+	std::cout << "begin: " << *it << std::endl;
+	std::cout << "capacity" << vec.capacity() << std::endl;
+	vec.emplace_back(4);
+	std::cout << "capacity" << vec.capacity() << std::endl;
+	vec.emplace_back(5);
+	std::cout << "capacity" << vec.capacity() << std::endl;
+	vec.emplace_back(6);
+	std::cout << "capacity" << vec.capacity() << std::endl;
+	//迭代器失效
+	std::cout << "begin: " << *it << std::endl;
+}
+inline void test_vector_reserve()
+{
+	std::vector<int> vec;
+	vec.reserve(100);
+	//预留100的空间，这样迭代器就不失效
+	for (int i = 0; i < 50; i++)
+	{
+		vec.push_back(i);
+	}
+	std::cout<< "capacity" << vec.capacity() << std::endl;
+	auto it = vec.begin();
+	for (int i = 0; i < 10; i++)
+	{
+		vec.pop_back();
+		std::cout << "capacity:" << vec.capacity() << " size: " << vec.size() << std::endl;
+		std::cout << *it << std::endl;
+	}
+}
+
+inline void test_priority_queue()
+{
+	std::vector<int> vec{2, 3, 5, -10, 100, 9, -3, 77, 64};
+	for (auto& i : vec) std::cout << i << ' ';
+	std::make_heap(vec.begin(), vec.end());
+	std::cout << std::endl;
+	std::cout << "vec:";
+	for (auto& i : vec) std::cout << i << ' ';
+	std::cout << std::endl << "vec(after sort):";
+	while (!vec.empty())
+	{
+		std::pop_heap(vec.begin(), vec.end());
+		std::cout << vec.back() << " ";
+		vec.pop_back();
+	}
+}
+
+inline void test_priority_queue_use_decltype()
+{
+	struct student
+	{
+		std::string name;
+		int score;
+	};
+	//使用匿名函数直接创建优先队列
+	auto compare = [](student left,student right)
+		{
+			if (left.score != right.score)
+				return left.score < right.score;
+			else
+				return left.name < right.name;
+		};
+	std::priority_queue<student, std::vector<student>, decltype(compare)> queue(compare);
+	queue.emplace(student{ "xiaoming", 60 });
+	queue.emplace(student{ "xiaohong", 70 });
+	queue.emplace(student{ "xiaohuang", 80 });
+	queue.emplace(student{ "xiaogou", 30 });
+	queue.emplace(student{ "xiaopi", 39 });
+	while (!queue.empty())
+	{
+		std::cout << "name: " << queue.top().name << " score: " << queue.top().score << std::endl;
+		queue.pop();
+	}
+	//直接将vector转换成堆
+	std::vector<student> vec;
+	vec.emplace_back(student{ "xiaoming", 60 });
+	vec.emplace_back(student{ "xiaohong", 70 });
+	vec.emplace_back(student{ "xiaohuang", 80 });
+	vec.emplace_back(student{ "xiaogou", 30 });
+	vec.emplace_back(student{ "xiaopi", 39 });
+	for (auto& value : vec)
+	{
+		std::cout << "name: " << value.name << " score: " << value.score << std::endl;
+	}
+	struct compare_student
+	{
+		bool operator()(const student& left, const student& right)
+		{
+			if (left.score != right.score)
+				return left.score < right.score;
+			else
+				return left.name < right.name;
+		}
+	};
+	std::priority_queue<student, std::vector<student>, compare_student> queue1(compare_student{}, std::move(vec));
+	std::cout <<std::endl;
+	while (!queue1.empty())
+	{
+		std::cout << "name: " << queue1.top().name << " score: " << queue1.top().score << std::endl;
+		queue1.pop();
+	}
 }

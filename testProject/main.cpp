@@ -13,6 +13,11 @@ int main()
 	// Run this test by itself because it intentionally invokes undefined behavior.
 	// test_unsafe_vector_concurrent_insert();
 	//test_map_and_unorder_map();
-	test_vector_shrink_to_fit();
+	//test_vector_shrink_to_fit();
+	//test_emplace();
+	//test_iterator();
+	//test_vector_reserve();
+	//test_priority_queue();
+	test_priority_queue_use_decltype();
 	return 0;
 }

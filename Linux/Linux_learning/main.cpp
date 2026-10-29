@@ -1,4 +1,4 @@
-﻿#include "examples/FileIoExample.h"
+#include "examples/FileIoExample.h"
 #include "examples/FileStreamExample.h"
 #include "examples/DirectoryExample.h"
 #include "examples/IdentityExample.h"
@@ -8,12 +8,15 @@
 #include "examples/ProcessGroupPriorityExample.h"
 #include "examples/ScanfExample.h"
 #include "examples/SessionExample.h"
+#include "examples/SignalThreadExample.h"
 #include "examples/StringToNumberExample.h"
 #include "examples/WaitExample.h"
 #include "examples/SocketTestExample.h"
 #include "examples/EchoServerExample.h"
 #include "examples/CalculationServer.h"
 #include "examples/EchoServer_UDP.h"
+#include "examples/ReuseAddrEchoServerExample.h"
+#include "examples/UDP_TCP_type.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -90,7 +93,29 @@ int main()
     // 需掌握：一个 TCP 连接可连续收发多条消息；read() 的返回字节数才是有效数据长度。
     //EchoServe();
 
-    //calculationServerTest();
-    EchoServeUDP();
+    // 【中缀表达式 TCP 计算服务】知识点：中缀转后缀、栈求值、TCP 消息边界、客户端/服务端分工。
+    // 参数：无；子进程读取中缀表达式并发送，父进程计算后返回结果，输入 quit 结束客户端。
+    // 需掌握：错误信息不能再次作为表达式计算；TCP 应以换行符等协议边界拆分多条消息。
+    // calculationServerTest();
+
+    // 【UDP 回声服务】知识点：SOCK_DGRAM、bind、sendto、recvfrom、无连接数据报通信。
+    // 参数：无；服务端绑定本机 9999 端口，客户端向 127.0.0.1:9999 发送数据报并接收回声。
+    // 需掌握：UDP 没有 listen/accept；客户端输入 q 仅退出本地循环，不会自动通知服务端。
+    // EchoServeUDP();
+
+    // 【TCP 与 UDP 套接字类型】知识点：SOCK_STREAM、SOCK_DGRAM、getsockopt、SO_TYPE。
+    // 参数：无；创建 TCP/UDP 套接字并读取其 SO_TYPE 选项值。
+    // 需掌握：套接字类型决定通信语义，TCP 面向连接且可靠，UDP 面向数据报且无连接。
+    //UDP_TCP_type();
+
+    // 【SO_REUSEADDR 与 TCP 服务重启】知识点：setsockopt、SO_REUSEADDR、bind、listen、accept、TIME_WAIT。
+    // 参数：无；第一轮服务结束后立即尝试不设置 SO_REUSEADDR 的 bind，再重启设置选项的服务端。
+    // 需掌握：前者预期得到 EADDRINUSE；SO_REUSEADDR 要在 bind 前设置，仍不能抢占正在监听的端口。
+    //ReuseAddrEchoServerExample();
+
+    // 【进程与线程信号】知识点：sigaction、SIGALRM、SIGINT、alarm、pause、getpid、pthread_self。
+    // 参数：无；每两秒接收一次 SIGALRM，默认演示三次；按 Ctrl+C 发送 SIGINT 后提前结束。
+    // 需掌握：信号处理函数只能做异步信号安全操作，业务输出和线程 ID 查询应放在正常执行流程中。
+    SignalThreadExample();
     return 0;
 }
