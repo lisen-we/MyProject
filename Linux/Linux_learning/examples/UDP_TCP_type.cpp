@@ -1,4 +1,4 @@
-#include"UDP_TCP_type.h"
+﻿#include"UDP_TCP_type.h"
 #include<sys/socket.h>
 #include<wait.h>
 #include<iostream>

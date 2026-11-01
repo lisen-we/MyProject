@@ -1,3 +1,4 @@
+﻿#include "ConcurrentServer.h"
 #include "examples/FileIoExample.h"
 #include "examples/FileStreamExample.h"
 #include "examples/DirectoryExample.h"
@@ -116,6 +117,8 @@ int main()
     // 【进程与线程信号】知识点：sigaction、SIGALRM、SIGINT、alarm、pause、getpid、pthread_self。
     // 参数：无；每两秒接收一次 SIGALRM，默认演示三次；按 Ctrl+C 发送 SIGINT 后提前结束。
     // 需掌握：信号处理函数只能做异步信号安全操作，业务输出和线程 ID 查询应放在正常执行流程中。
-    SignalThreadExample();
+    // SignalThreadExample();
+
+    ConcurrentServer();
     return 0;
 }
