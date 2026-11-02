@@ -1,4 +1,4 @@
-﻿#include "ConcurrentServer.h"
+#include "ConcurrentServer.h"
 #include "examples/FileIoExample.h"
 #include "examples/FileStreamExample.h"
 #include "examples/DirectoryExample.h"
@@ -18,6 +18,7 @@
 #include "examples/EchoServer_UDP.h"
 #include "examples/ReuseAddrEchoServerExample.h"
 #include "examples/UDP_TCP_type.h"
+#include "examples/Pipe_test.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -119,6 +120,12 @@ int main()
     // 需掌握：信号处理函数只能做异步信号安全操作，业务输出和线程 ID 查询应放在正常执行流程中。
     // SignalThreadExample();
 
-    ConcurrentServer();
+    //ConcurrentServer();
+    singlePipeTest();
+
+    // 【双向管道通信】知识点：两条单向 pipe、父子进程、read/write、关闭无用端、waitpid。
+    // 参数：无；父进程发送请求，子进程读取后通过另一条 pipe 返回响应。
+    // 需掌握：一个 pipe 只能单向传输；双向通信需要两条方向相反的管道。
+    DoublePipeTest();
     return 0;
 }

@@ -207,7 +207,7 @@ int run_server(int ready_pipe_write_fd)
         do
         {
             client_fd = ::accept(server_fd,
-                reinterpret_cast<sockaddr*>(&client_address), &client_address_length);
+                (struct sockaddr*)(&client_address), &client_address_length);
         } while (client_fd == -1 && errno == EINTR);
 
         if (client_fd == -1)
@@ -312,6 +312,7 @@ int run_demo_client(int client_number)
     // shutdown(SHUT_WR) 只关闭“写方向”，向服务端发送 FIN。服务端 read 返回 0
     // 后结束 worker；这里用于展示 TCP 半关闭，而非直接丢弃连接。
     if (::shutdown(client_fd, SHUT_WR) == -1)
+        // shutdown的作用是向服务器发送FIN信号，此时客户端进入半关闭，可以继续read，但是无法write
         std::perror("client shutdown failed");
     ::close(client_fd);
     log_process("client", "client #" + std::to_string(client_number) + " exits");
@@ -328,7 +329,8 @@ void ConcurrentServer()
         std::perror("pipe failed");
         return;
     }
-
+    // pipe成功之后ready_pipe中0，1位置保存的是文件标识符，0位置为读取的文件标识符
+    // 1位置为写入的文件标识符
     // 第一次 fork 分离两种角色：子进程运行服务端，父进程作为启动器创建客户端。
     const pid_t server_pid = ::fork();
     if (server_pid == -1)
@@ -341,19 +343,22 @@ void ConcurrentServer()
 
     if (server_pid == 0)
     {
+        // 经过fork之后，父进程和子进程各自拥有一份文件标识符
+        // 子进程尽早关闭自己的不使用的读取端文件标识符，确保管道的 EOF、SIGPIPE 等语义正确
         // 服务端只写就绪通知，不读取 pipe。
         ::close(ready_pipe[0]);
         const int result = run_server(ready_pipe[1]);
         ::close(ready_pipe[1]);
+        //使用_exit立即退出，不清理缓冲区
         _exit(result);
     }
 
     // 启动器只读取就绪通知，不写 pipe。
     ::close(ready_pipe[1]);
     char server_ready = '\0';
-    const ssize_t readiness_count = ::read(ready_pipe[0], &server_ready,
-        sizeof(server_ready));
+    const ssize_t readiness_count = ::read(ready_pipe[0], &server_ready,sizeof(server_ready));
     ::close(ready_pipe[0]);
+    // 只要父进程读取到了pipe中的内容，并且这个内容的值为R则说明之前的子进程已经成功开启了服务器。
     if (readiness_count != 1 || server_ready != 'R')
     {
         std::cerr << "server did not become ready; no client will be started\n";
@@ -365,6 +370,7 @@ void ConcurrentServer()
     // 第二组 fork 创建三个独立客户端。它们由内核调度，可与多个 worker 交错执行；
     // 在多核 CPU 上，部分操作还可能真正并行。
     std::array<pid_t, kDemoClientCount> client_pids {};
+    // 创建三个子进程，每个子进程各自持有一个客户端来连接服务器
     for (std::size_t index = 0; index < kDemoClientCount; ++index)
     {
         const pid_t client_pid = ::fork();
