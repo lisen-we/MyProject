@@ -1,4 +1,4 @@
-#include "ConcurrentServer.h"
+﻿#include "ConcurrentServer.h"
 #include "examples/FileIoExample.h"
 #include "examples/FileStreamExample.h"
 #include "examples/DirectoryExample.h"
@@ -21,6 +21,7 @@
 #include "examples/Pipe_test.h"
 #include "examples/shmgetTest.h"
 #include "examples/msg_sharedTest.h"
+#include "examples/Thread_Test.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -130,6 +131,8 @@ int main()
     // 需掌握：一个 pipe 只能单向传输；双向通信需要两条方向相反的管道。
     //DoublePipeTest();
     //shmgetTest();
-    msg_sharedTest();
+    //msg_sharedTest();
+    // 线程学习路线：创建与 join -> 互斥量 -> 信号量 -> 退出与取消。
+    Thread_Test();
     return 0;
 }

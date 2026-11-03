@@ -97,6 +97,7 @@
     <ClCompile Include="examples\shmgetTest.cpp" />
     <ClCompile Include="examples\SignalThreadExample.cpp" />
     <ClCompile Include="examples\StringToNumberExample.cpp" />
+    <ClCompile Include="examples\Thread_Test.cpp" />
     <ClCompile Include="examples\UDP_TCP_type.cpp" />
     <ClCompile Include="examples\VariadicExample.cpp" />
     <ClCompile Include="examples\WaitExample.cpp" />
@@ -124,6 +125,7 @@
     <ClInclude Include="examples\shmgetTest.h" />
     <ClInclude Include="examples\SignalThreadExample.h" />
     <ClInclude Include="examples\StringToNumberExample.h" />
+    <ClInclude Include="examples\Thread_Test.h" />
     <ClInclude Include="examples\UDP_TCP_type.h" />
     <ClInclude Include="examples\VariadicExample.h" />
     <ClInclude Include="examples\WaitExample.h" />
@@ -132,7 +134,14 @@
   <ItemGroup>
     <Text Include="test.txt" />
   </ItemGroup>
-  <ItemDefinitionGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>-pthread %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
