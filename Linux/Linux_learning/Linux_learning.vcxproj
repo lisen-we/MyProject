@@ -85,6 +85,7 @@
     <ClCompile Include="examples\FileIoExample.cpp" />
     <ClCompile Include="examples\FileStreamExample.cpp" />
     <ClCompile Include="examples\IdentityExample.cpp" />
+    <ClCompile Include="examples\msg_sharedTest.cpp" />
     <ClCompile Include="examples\NumberToStringExample.cpp" />
     <ClCompile Include="examples\Pipe_test.cpp" />
     <ClCompile Include="examples\PrintExample.cpp" />
@@ -111,6 +112,7 @@
     <ClInclude Include="examples\FileIoExample.h" />
     <ClInclude Include="examples\FileStreamExample.h" />
     <ClInclude Include="examples\IdentityExample.h" />
+    <ClInclude Include="examples\msg_sharedTest.h" />
     <ClInclude Include="examples\NumberToStringExample.h" />
     <ClInclude Include="examples\Pipe_test.h" />
     <ClInclude Include="examples\PrintExample.h" />
