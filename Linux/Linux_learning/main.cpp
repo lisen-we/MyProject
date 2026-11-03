@@ -19,6 +19,7 @@
 #include "examples/ReuseAddrEchoServerExample.h"
 #include "examples/UDP_TCP_type.h"
 #include "examples/Pipe_test.h"
+#include "examples/shmgetTest.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -121,11 +122,12 @@ int main()
     // SignalThreadExample();
 
     //ConcurrentServer();
-    singlePipeTest();
+    //singlePipeTest();
 
     // 【双向管道通信】知识点：两条单向 pipe、父子进程、read/write、关闭无用端、waitpid。
     // 参数：无；父进程发送请求，子进程读取后通过另一条 pipe 返回响应。
     // 需掌握：一个 pipe 只能单向传输；双向通信需要两条方向相反的管道。
-    DoublePipeTest();
+    //DoublePipeTest();
+    shmgetTest();
     return 0;
 }

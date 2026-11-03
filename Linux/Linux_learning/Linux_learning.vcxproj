@@ -93,6 +93,7 @@
     <ClCompile Include="examples\ReuseAddrEchoServerExample.cpp" />
     <ClCompile Include="examples\ScanfExample.cpp" />
     <ClCompile Include="examples\SessionExample.cpp" />
+    <ClCompile Include="examples\shmgetTest.cpp" />
     <ClCompile Include="examples\SignalThreadExample.cpp" />
     <ClCompile Include="examples\StringToNumberExample.cpp" />
     <ClCompile Include="examples\UDP_TCP_type.cpp" />
@@ -118,6 +119,7 @@
     <ClInclude Include="examples\ReuseAddrEchoServerExample.h" />
     <ClInclude Include="examples\ScanfExample.h" />
     <ClInclude Include="examples\SessionExample.h" />
+    <ClInclude Include="examples\shmgetTest.h" />
     <ClInclude Include="examples\SignalThreadExample.h" />
     <ClInclude Include="examples\StringToNumberExample.h" />
     <ClInclude Include="examples\UDP_TCP_type.h" />
