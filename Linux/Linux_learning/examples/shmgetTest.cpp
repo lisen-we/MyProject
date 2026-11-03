@@ -5,141 +5,46 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <semaphore.h>
+#include <signal.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-namespace
-{
-constexpr std::size_t kStudentCapacity = 6;
-
-struct Student
-{
-    int age;
-    char name[64];
-};
-
-struct StudentInput
-{
-    int age;
-    const char* name;
-};
-
-struct SharedStudents
-{
-    // 单一互斥锁只能保证互斥，不能决定下一次由哪个进程获得锁。
-    // 这两个信号量分别表示父进程和子进程的执行轮次。
-    sem_t parent_turn;
-    sem_t child_turn;
-
-    std::size_t count;
-    Student data[kStudentCapacity];
-};
-
-bool wait_semaphore(sem_t* semaphore, const char* error_message)
-{
-    while (::sem_wait(semaphore) == -1)
-    {
-        // sem_wait 正常情况下会阻塞而不占用 CPU。只有被信号中断时才重试，
-        // 其他错误必须报告，不能无条件循环空转。
-        if (errno == EINTR)
-            continue;
-
-        std::perror(error_message);
-        return false;
-    }
-
-    return true;
-}
-
-bool post_semaphore(sem_t* semaphore, const char* error_message)
-{
-    if (::sem_post(semaphore) == -1)
-    {
-        std::perror(error_message);
-        return false;
-    }
-
-    return true;
-}
-
-bool append_students(SharedStudents* shared,
-    const StudentInput* students,
-    std::size_t student_count,
-    sem_t* current_process_turn,
-    sem_t* next_process_turn)
-{
-    for (std::size_t index = 0; index < student_count; ++index)
-    {
-        // 父、子进程只能在轮到自己时继续执行，因此写入顺序必定是
-        // 父、子、父、子……，而不是由调度器随机决定。
-        if (!wait_semaphore(current_process_turn, "sem_wait failed"))
-            return false;
-
-        if (shared->count >= kStudentCapacity)
-        {
-            std::fputs("shared-memory student array is full\n", stderr);
-            return false;
-        }
-
-        Student& target = shared->data[shared->count];
-        target.age = students[index].age;
-        std::strncpy(target.name, students[index].name, sizeof(target.name) - 1);
-        target.name[sizeof(target.name) - 1] = '\0';
-        ++shared->count;
-
-        // 必须在当前记录完整写入后，才通知另一个进程进入下一轮。
-        // sem_post 同时保证了进程之间所需的内存可见性顺序。
-        if (!post_semaphore(next_process_turn, "sem_post failed"))
-            return false;
-    }
-
-    return true;
-}
-
-bool wait_for_child(pid_t child_pid)
-{
-    int child_status = 0;
-    pid_t waited_pid = -1;
-    do
-    {
-        waited_pid = ::waitpid(child_pid, &child_status, 0);
-    } while (waited_pid == -1 && errno == EINTR);
-
-    if (waited_pid == -1)
-    {
-        std::perror("waitpid failed");
-        return false;
-    }
-
-    if (!WIFEXITED(child_status) || WEXITSTATUS(child_status) != EXIT_SUCCESS)
-    {
-        std::fputs("child process did not finish the shared-memory demo successfully\n", stderr);
-        return false;
-    }
-
-    return true;
-}
-
-void destroy_shared_memory(int shmid, SharedStudents* shared)
-{
-    // 仅由父进程回收资源，并且必须先 waitpid()。子进程仍可能使用共享
-    // 信号量时就销毁它，会产生未定义行为。
-    if (::sem_destroy(&shared->parent_turn) == -1)
-        std::perror("destroy parent_turn failed");
-    if (::sem_destroy(&shared->child_turn) == -1)
-        std::perror("destroy child_turn failed");
-    if (::shmdt(shared) == -1)
-        std::perror("shmdt failed");
-    if (::shmctl(shmid, IPC_RMID, nullptr) == -1)
-        std::perror("shmctl IPC_RMID failed");
-}
-}
-
 void shmgetTest()
 {
+    constexpr std::size_t kStudentCapacity = 6;
+    constexpr unsigned short kParentTurn = 0;
+    constexpr unsigned short kChildTurn = 1;
+
+    struct Student
+    {
+        int age;
+        char name[64];
+    };
+
+    struct StudentInput
+    {
+        int age;
+        const char* name;
+    };
+
+    struct SharedStudents
+    {
+        // System V 信号量由内核维护，因此共享内存只保存需要共享的数据。
+        std::size_t count;
+        Student data[kStudentCapacity];
+    };
+
+    // glibc 不会替应用程序声明 semctl 所需的 union semun，调用 SETALL 时
+    // 由应用程序声明包含 array 成员的联合体即可。
+    union Semun
+    {
+        unsigned short* array;
+    };
+
     constexpr std::array<StudentInput, 3> kParentStudents = {
         StudentInput{21, "xiaoming"},
         StudentInput{23, "xiaohong"},
@@ -151,10 +56,8 @@ void shmgetTest()
         StudentInput{26, "xiaozi"},
     };
 
-    // 父进程必须在 fork() 之前创建共享内存并初始化全部信号量；否则子进程
-    // 可能抢先执行，并对未初始化的 sem_t 调用 sem_wait()。
-    // IPC_PRIVATE 表示每次请求一块新的共享内存，而不是按公开 key 查找。
-    // 下方创建的子进程会继承 shmid，以及当前已挂载的共享内存映射。
+    // IPC_PRIVATE 每次创建一块新的共享内存；父进程 fork 后，子进程会继承
+    // shmid 以及当前的共享内存映射，因此不需要用 ftok 生成公开 key。
     const int shmid = ::shmget(IPC_PRIVATE, sizeof(SharedStudents), IPC_CREAT | 0600);
     if (shmid == -1)
     {
@@ -169,58 +72,183 @@ void shmgetTest()
         ::shmctl(shmid, IPC_RMID, nullptr);
         return;
     }
-
     shared->count = 0;
-    if (::sem_init(&shared->parent_turn, 1, 1) == -1)
+
+    // 创建包含两个信号量的 System V 信号量集：
+    // kParentTurn 初始为 1，父进程可先写；kChildTurn 初始为 0，子进程等待。
+    const int semid = ::semget(IPC_PRIVATE, 2, IPC_CREAT | 0600);
+    if (semid == -1)
     {
-        std::perror("initialize parent_turn failed");
-        ::shmdt(shared);
-        ::shmctl(shmid, IPC_RMID, nullptr);
-        return;
-    }
-    if (::sem_init(&shared->child_turn, 1, 0) == -1)
-    {
-        std::perror("initialize child_turn failed");
-        ::sem_destroy(&shared->parent_turn);
+        std::perror("semget failed");
         ::shmdt(shared);
         ::shmctl(shmid, IPC_RMID, nullptr);
         return;
     }
 
+    std::array<unsigned short, 2> initial_values = {1, 0};
+    Semun semun {};
+    semun.array = initial_values.data();
+    if (::semctl(semid, 0, SETALL, semun) == -1)
+    {
+        std::perror("semctl SETALL failed");
+        ::semctl(semid, 0, IPC_RMID);
+        ::shmdt(shared);
+        ::shmctl(shmid, IPC_RMID, nullptr);
+        return;
+    }
+
+    // 所有 IPC 对象必须在 fork() 前创建和初始化。否则子进程可能在父进程
+    // 设置初始信号量值之前就开始执行，从而无法保证父子进程的交替关系。
     const pid_t child_pid = ::fork();
     if (child_pid == -1)
     {
         std::perror("fork failed");
-        destroy_shared_memory(shmid, shared);
+        ::semctl(semid, 0, IPC_RMID);
+        ::shmdt(shared);
+        ::shmctl(shmid, IPC_RMID, nullptr);
         return;
     }
 
     if (child_pid == 0)
     {
-        const bool child_success = append_students(shared,
-            kChildStudents.data(),
-            kChildStudents.size(),
-            &shared->child_turn,
-            &shared->parent_turn);
+        bool child_success = true;
 
-        // 子进程只解除自身的地址映射，不能销毁共享信号量或删除共享内存；
-        // 这些资源由父进程统一回收。
+        for (const StudentInput& student : kChildStudents)
+        {
+            // sem_op 为 -1 是 P 操作：当 kChildTurn 为 0 时阻塞；获得子进程
+            // 轮次后将其减为 0。仅在 EINTR 时重试，避免错误时无意义地空转。
+            sembuf wait_child_turn {};
+            wait_child_turn.sem_num = kChildTurn;
+            wait_child_turn.sem_op = -1;
+            wait_child_turn.sem_flg = 0;
+            while (::semop(semid, &wait_child_turn, 1) == -1)
+            {
+                if (errno == EINTR)
+                    continue;
+
+                std::perror("child semop wait failed");
+                child_success = false;
+                break;
+            }
+            if (!child_success)
+                break;
+
+            if (shared->count >= kStudentCapacity)
+            {
+                std::fputs("shared-memory student array is full\n", stderr);
+                child_success = false;
+                break;
+            }
+
+            Student& target = shared->data[shared->count];
+            target.age = student.age;
+            std::strncpy(target.name, student.name, sizeof(target.name) - 1);
+            target.name[sizeof(target.name) - 1] = '\0';
+            ++shared->count;
+
+            // sem_op 为 +1 是 V 操作：当前记录完整写入后，通知父进程开始
+            // 下一轮。内核信号量同时保证写入结果对父进程可见。
+            sembuf post_parent_turn {};
+            post_parent_turn.sem_num = kParentTurn;
+            post_parent_turn.sem_op = 1;
+            post_parent_turn.sem_flg = 0;
+            while (::semop(semid, &post_parent_turn, 1) == -1)
+            {
+                if (errno == EINTR)
+                    continue;
+
+                std::perror("child semop post failed");
+                child_success = false;
+                break;
+            }
+            if (!child_success)
+                break;
+        }
+
+        // 子进程只解除自己的共享内存映射。System V 信号量集与共享内存均由
+        // 父进程在 waitpid() 之后统一删除，避免子进程过早回收资源。
         if (::shmdt(shared) == -1)
+        {
             std::perror("child shmdt failed");
+            child_success = false;
+        }
         _exit(child_success ? EXIT_SUCCESS : EXIT_FAILURE);
     }
 
-    const bool parent_success = append_students(shared,
-        kParentStudents.data(),
-        kParentStudents.size(),
-        &shared->parent_turn,
-        &shared->child_turn);
-    const bool child_success = wait_for_child(child_pid);
+    bool parent_success = true;
+    for (const StudentInput& student : kParentStudents)
+    {
+        // sem_op 为 -1 是 P 操作：父进程只在 kParentTurn 大于 0 时继续执行。
+        sembuf wait_parent_turn {};
+        wait_parent_turn.sem_num = kParentTurn;
+        wait_parent_turn.sem_op = -1;
+        wait_parent_turn.sem_flg = 0;
+        while (::semop(semid, &wait_parent_turn, 1) == -1)
+        {
+            if (errno == EINTR)
+                continue;
+
+            std::perror("parent semop wait failed");
+            parent_success = false;
+            break;
+        }
+        if (!parent_success)
+            break;
+
+        if (shared->count >= kStudentCapacity)
+        {
+            std::fputs("shared-memory student array is full\n", stderr);
+            parent_success = false;
+            break;
+        }
+
+        Student& target = shared->data[shared->count];
+        target.age = student.age;
+        std::strncpy(target.name, student.name, sizeof(target.name) - 1);
+        target.name[sizeof(target.name) - 1] = '\0';
+        ++shared->count;
+
+        // 父进程写完一个学生后执行 V 操作，让子进程获得下一次写入轮次。
+        sembuf post_child_turn {};
+        post_child_turn.sem_num = kChildTurn;
+        post_child_turn.sem_op = 1;
+        post_child_turn.sem_flg = 0;
+        while (::semop(semid, &post_child_turn, 1) == -1)
+        {
+            if (errno == EINTR)
+                continue;
+
+            std::perror("parent semop post failed");
+            parent_success = false;
+            break;
+        }
+        if (!parent_success)
+            break;
+    }
+
+    // 父进程自身异常退出时，子进程可能仍在 semop 中等待自己的轮次；先终止
+    // 子进程，再 waitpid 回收，避免父进程在错误分支永久等待。
+    if (!parent_success && ::kill(child_pid, SIGTERM) == -1 && errno != ESRCH)
+        std::perror("kill child failed");
+
+    int child_status = 0;
+    pid_t waited_pid = -1;
+    do
+    {
+        waited_pid = ::waitpid(child_pid, &child_status, 0);
+    } while (waited_pid == -1 && errno == EINTR);
+
+    const bool child_success = waited_pid == child_pid && WIFEXITED(child_status) &&
+        WEXITSTATUS(child_status) == EXIT_SUCCESS;
+    if (waited_pid == -1)
+        std::perror("waitpid failed");
+    else if (!child_success)
+        std::fputs("child process did not finish the shared-memory demo successfully\n", stderr);
 
     if (parent_success && child_success)
     {
-        // 在 waitpid() 之后统一输出，避免父子进程各自的 stdout 缓冲区混合，
-        // 从而准确展示共享数组中的实际交替顺序。
+        // 等子进程退出后再输出，可避免两个进程独立缓冲 stdout 造成的显示顺序
+        // 混乱；此处展示的是共享数组中真正的写入顺序。
         std::puts("shared-memory students (parent and child alternate):");
         for (std::size_t index = 0; index < shared->count; ++index)
         {
@@ -231,5 +259,12 @@ void shmgetTest()
         }
     }
 
-    destroy_shared_memory(shmid, shared);
+    // IPC_RMID 不会自动创建或分配新的 IPC 对象，而是把现有内核 IPC 对象
+    // 标记为删除。此时子进程已退出，因此父进程可以安全地回收信号量集和共享内存。
+    if (::semctl(semid, 0, IPC_RMID) == -1)
+        std::perror("semctl IPC_RMID failed");
+    if (::shmdt(shared) == -1)
+        std::perror("parent shmdt failed");
+    if (::shmctl(shmid, IPC_RMID, nullptr) == -1)
+        std::perror("shmctl IPC_RMID failed");
 }
