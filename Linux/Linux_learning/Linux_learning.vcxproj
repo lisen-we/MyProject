@@ -86,6 +86,7 @@
     <ClCompile Include="examples\FileStreamExample.cpp" />
     <ClCompile Include="examples\IdentityExample.cpp" />
     <ClCompile Include="examples\msg_sharedTest.cpp" />
+    <ClCompile Include="examples\mutiThread_EchoServer.cpp" />
     <ClCompile Include="examples\NumberToStringExample.cpp" />
     <ClCompile Include="examples\Pipe_test.cpp" />
     <ClCompile Include="examples\PrintExample.cpp" />
@@ -98,6 +99,7 @@
     <ClCompile Include="examples\SignalThreadExample.cpp" />
     <ClCompile Include="examples\StringToNumberExample.cpp" />
     <ClCompile Include="examples\Thread_Test.cpp" />
+    <ClCompile Include="examples\Thread_Test_1.cpp" />
     <ClCompile Include="examples\UDP_TCP_type.cpp" />
     <ClCompile Include="examples\VariadicExample.cpp" />
     <ClCompile Include="examples\WaitExample.cpp" />
@@ -114,6 +116,7 @@
     <ClInclude Include="examples\FileStreamExample.h" />
     <ClInclude Include="examples\IdentityExample.h" />
     <ClInclude Include="examples\msg_sharedTest.h" />
+    <ClInclude Include="examples\mutiThread_EchoServer.h" />
     <ClInclude Include="examples\NumberToStringExample.h" />
     <ClInclude Include="examples\Pipe_test.h" />
     <ClInclude Include="examples\PrintExample.h" />
@@ -126,6 +129,7 @@
     <ClInclude Include="examples\SignalThreadExample.h" />
     <ClInclude Include="examples\StringToNumberExample.h" />
     <ClInclude Include="examples\Thread_Test.h" />
+    <ClInclude Include="examples\Thread_Test_1.h" />
     <ClInclude Include="examples\UDP_TCP_type.h" />
     <ClInclude Include="examples\VariadicExample.h" />
     <ClInclude Include="examples\WaitExample.h" />

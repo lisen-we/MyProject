@@ -22,6 +22,7 @@
 #include "examples/shmgetTest.h"
 #include "examples/msg_sharedTest.h"
 #include "examples/Thread_Test.h"
+#include "examples/Thread_Test_1.h"
 int main()
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
@@ -133,6 +134,7 @@ int main()
     //shmgetTest();
     //msg_sharedTest();
     // 线程学习路线：创建与 join -> 互斥量 -> 信号量 -> 退出与取消。
-    Thread_Test();
+    //Thread_Test();
+    myThreadTest();
     return 0;
 }
