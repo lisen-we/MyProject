@@ -1,4 +1,4 @@
-﻿#include "ConcurrentServer.h"
+#include "ConcurrentServer.h"
 #include "examples/FileIoExample.h"
 #include "examples/FileStreamExample.h"
 #include "examples/DirectoryExample.h"
@@ -23,7 +23,11 @@
 #include "examples/msg_sharedTest.h"
 #include "examples/Thread_Test.h"
 #include "examples/Thread_Test_1.h"
-int main()
+#include "examples/mutiThread_EchoServer.h"
+#include "examples/IO_Select_Test.h"
+#include <iostream>
+
+int main(int argc, char* argv[])
 {
     // 【字符串转数值】知识点：atoi/strtol、进制、errno、end_ptr、C++ 异常。
     // 参数：无；示例数据写在函数内部。
@@ -135,6 +139,17 @@ int main()
     //msg_sharedTest();
     // 线程学习路线：创建与 join -> 互斥量 -> 信号量 -> 退出与取消。
     //Thread_Test();
-    myThreadTest();
+    // 【多线程 TCP 聊天服务器】知识点：accept、pthread、互斥量、TCP 字节流分帧、广播、断开清理。
+    // 参数：无；监听 10000 端口。客户端使用 nc 连接，发送换行结尾的文本；发送 quit 断开。
+    // 需掌握：一个客户端一个分离线程；每条消息可能被拆分或合并，必须按换行符重新组帧。
+    //mutiThread_EchoServer();
+    // 【select I/O 多路复用回声服务】知识点：fd_set、max_fd + 1、超时重置、多个客户端。
+    // 用法：./Linux_learning s 启动服务端；另开终端执行 ./Linux_learning c 启动客户端。
+    if (argc != 2)
+    {
+        std::cout << "Usage: " << argv[0] << " s|c\n";
+        return 1;
+    }
+    IOSelectTest(argv[1]);
     return 0;
 }

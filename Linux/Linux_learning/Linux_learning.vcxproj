@@ -85,6 +85,7 @@
     <ClCompile Include="examples\FileIoExample.cpp" />
     <ClCompile Include="examples\FileStreamExample.cpp" />
     <ClCompile Include="examples\IdentityExample.cpp" />
+    <ClCompile Include="examples\IO_Select_Test.cpp" />
     <ClCompile Include="examples\msg_sharedTest.cpp" />
     <ClCompile Include="examples\mutiThread_EchoServer.cpp" />
     <ClCompile Include="examples\NumberToStringExample.cpp" />
@@ -115,6 +116,7 @@
     <ClInclude Include="examples\FileIoExample.h" />
     <ClInclude Include="examples\FileStreamExample.h" />
     <ClInclude Include="examples\IdentityExample.h" />
+    <ClInclude Include="examples\IO_Select_Test.h" />
     <ClInclude Include="examples\msg_sharedTest.h" />
     <ClInclude Include="examples\mutiThread_EchoServer.h" />
     <ClInclude Include="examples\NumberToStringExample.h" />
