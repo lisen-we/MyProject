@@ -56,13 +56,18 @@ void remove_client(fd_set* master_reads, int client_fd, int* max_fd)
 
 void run_server()
 {
+    // 创建套接字
     const int server_socket = ::socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1)
     {
         std::perror("socket failed");
         return;
     }
-
+    // 在服务器关闭的时候，会短暂的处于time_wait状态，从而导致无法快速重启服务
+    // 使用setsocketopt设置套接字的权限，给服务器套接字设置SOL_SOCKET下的SO_REUSEADDR权限
+    // 让其更快地复用地址端口,reuse_address传入1表示开启该权限
+    // setsocketopt的参数分别为：套接字，层级，具体选项，值的地址，长度
+    // SOL = socket option level SO = socket option
     int reuse_address = 1;
     if (::setsockopt(server_socket,
         SOL_SOCKET,
@@ -74,7 +79,7 @@ void run_server()
         ::close(server_socket);
         return;
     }
-
+    // 绑定服务器地址
     sockaddr_in server_address {};
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -87,7 +92,7 @@ void run_server()
         ::close(server_socket);
         return;
     }
-
+    // listen 等待区最多只能容纳五个连接
     if (::listen(server_socket, kListenBacklog) == -1)
     {
         std::perror("listen failed");
@@ -105,8 +110,7 @@ void run_server()
     std::printf("[server] select echo server listening on 0.0.0.0:%d\n", kListenPort);
     while (true)
     {
-        // select 返回后只保留“本轮就绪”的描述符。因此每轮都从主集合复制
-        // read_set；否则未就绪的客户端会在上一轮后被错误地丢失。
+        // 每次循环都会复制一次监听集合
         fd_set read_set = master_reads;
 
         // Linux 会修改 timeval 为剩余等待时间。每轮重新设置为 0.5 秒，
@@ -115,8 +119,7 @@ void run_server()
         timeout.tv_sec = 0;
         timeout.tv_usec = 500000;
 
-        // 第一个参数不是描述符数量，而是当前最大描述符加 1。select 只检查
-        // 区间 [0, max_fd]，因此新客户端 fd 更大时必须同步更新 max_fd。
+        // select() 会修改 read_set，只保留本轮发生可读事件的描述符。
         const int ready_count = ::select(max_fd + 1,
             &read_set,
             nullptr,
@@ -135,7 +138,8 @@ void run_server()
             // 当前 0.5 秒内没有任何 socket 可读；继续下一轮等待。
             continue;
         }
-
+        // read_set 是 select 修改后的“本轮可读就绪集合”。
+        // 若监听 socket 可读，说明有新客户端连接等待 accept()。
         if (FD_ISSET(server_socket, &read_set))
         {
             sockaddr_in client_address {};
@@ -150,8 +154,12 @@ void run_server()
             }
             else if (client_socket >= FD_SETSIZE)
             {
+                // fd_set中存放的是文件描述符，其范围为0~1023
                 // fd_set 只能表示 [0, FD_SETSIZE - 1]。超出范围时不能 FD_SET，
                 // 否则会越界写入 fd_set。
+                //进程实际能打开的文件描述符数量可能超过 1024，但传统 select 的 fd_set 
+                //默认无法安全监听编号大于等于 FD_SETSIZE 的描述符。
+                //这也是高并发 Linux 服务端更常使用 poll 或 epoll 的原因之一
                 std::fputs("client descriptor exceeds FD_SETSIZE; connection rejected\n", stderr);
                 ::close(client_socket);
             }
@@ -173,10 +181,10 @@ void run_server()
             }
         }
 
-        // 此处遍历的是 read_set，而非 master_reads：只有被 select 标记为“可读”
-        // 的客户端才调用 read，其他客户端不会阻塞本轮事件循环。
+        // 遍历所有可能的文件描述符，找出本轮 select() 判断为“客户端可读”的 socket，并读取和处理它们的数据。
         for (int client_fd = 0; client_fd <= max_fd; ++client_fd)
         {
+            // FD_ISSET用于判断发生可读事件的是否是当前传入的文件描述符
             if (client_fd == server_socket || !FD_ISSET(client_fd, &read_set))
                 continue;
 
