@@ -25,6 +25,7 @@
 #include "examples/Thread_Test_1.h"
 #include "examples/mutiThread_EchoServer.h"
 #include "examples/IO_Select_Test.h"
+#include "examples/IO_epoll_Test.h"
 #include <iostream>
 
 int main(int argc, char* argv[])
@@ -150,6 +151,7 @@ int main(int argc, char* argv[])
         std::cout << "Usage: " << argv[0] << " s|c\n";
         return 1;
     }
-    IOSelectTest(argv[1]);
+    //IOSelectTest(argv[1]);
+    IO_EPOLL_TEST(argv[1]);
     return 0;
 }
