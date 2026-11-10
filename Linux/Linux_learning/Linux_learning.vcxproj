@@ -89,6 +89,7 @@
     <ClCompile Include="examples\IO_Select_Test.cpp" />
     <ClCompile Include="examples\msg_sharedTest.cpp" />
     <ClCompile Include="examples\mutiThread_EchoServer.cpp" />
+    <ClCompile Include="examples\MyEchoServer.cpp" />
     <ClCompile Include="examples\NumberToStringExample.cpp" />
     <ClCompile Include="examples\Pipe_test.cpp" />
     <ClCompile Include="examples\PrintExample.cpp" />
@@ -121,6 +122,7 @@
     <ClInclude Include="examples\IO_Select_Test.h" />
     <ClInclude Include="examples\msg_sharedTest.h" />
     <ClInclude Include="examples\mutiThread_EchoServer.h" />
+    <ClInclude Include="examples\MyEchoServer.h" />
     <ClInclude Include="examples\NumberToStringExample.h" />
     <ClInclude Include="examples\Pipe_test.h" />
     <ClInclude Include="examples\PrintExample.h" />
