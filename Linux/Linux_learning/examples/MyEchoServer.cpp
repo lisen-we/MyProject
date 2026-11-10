@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <wait.h>
+#include <array>
+#include <vector>
 namespace
 {
 	constexpr int maxClientCount = 5;
@@ -32,10 +34,42 @@ namespace
 			server_addr.sin_port = htons(socketPort);
 			bind(server_socket, (sockaddr*)&server_addr, sizeof(server_addr));
 			listen(server_socket, maxClientCount);
-			epoll_event event; //epoll事件
+			epoll_event listen_event{}; //epoll事件
 			int epfd, event_cnt;
 			epfd = epoll_create1(EPOLL_CLOEXEC);
-			
+			// 将 server_socket 这个已有的文件描述符作为用户数据保存；
+			// epoll_wait 返回就绪事件时会原样带回，方便识别事件来源。
+			listen_event.data.fd = server_socket;
+			listen_event.events = EPOLLIN;  //关注可读事件，默认为水平触发
+			epoll_ctl(epfd, EPOLL_CTL_ADD, server_socket, &listen_event); //将服务器套接字加入到监控中
+			std::array<epoll_event, 100> epoll_events{};
+			std::vector<int> socket_fds;
+			while (true)
+			{
+				// timeout为-1，标识阻塞等待
+				int count = epoll_wait(epfd, epoll_events.data(), 100, -1);
+				if (count == -1)
+				{
+					if (errno == EINTR)
+						continue;
+					break;
+				}
+				else if (count > 0)
+				{
+					for (int i = 0; i < count; i++)
+					{
+						int ready_fd = epoll_events[i].data.fd;
+						int ready_fd_event = epoll_events[i].events;
+						if (ready_fd == server_socket)
+						{
+							//此时就绪的是服务器套接字，表示可以accept客户端
+							client_socket = accept(server_socket, (sockaddr*)&client_addr, &clientAddrLen);
+
+						}
+						
+					}
+				}
+			}
 		}
 		else if (type == 1)
 		{
