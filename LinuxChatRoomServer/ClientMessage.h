@@ -29,11 +29,11 @@ struct ClientMessageHeader
     ClientCommandType type = ClientCommandType::LoginRequest;
 };
 
-// 登录正文：昵称长度（2 字节）和昵称字节。
-// 昵称长度按 UTF-8 字节数计算。
+// 登录正文：账号和密码，分别由 2 字节大端长度和 UTF-8 字节组成。
 struct LoginRequestBody
 {
-    std::string nickname;
+    std::string account;
+    std::string password;
 };
 
 // 注册正文依次为账号、密码、昵称，每项由 2 字节大端长度和 UTF-8 字节组成。
@@ -74,6 +74,8 @@ struct ParsedClientMessage
 
 struct clientSession
 {
+    bool loggedIn = false;
+    std::string account;
 	std::string receiveBuffer;
     // 每次成功解析后覆盖；业务层应在下一次解析前处理或复制该结果。
     ParsedClientMessage parsedMessage;

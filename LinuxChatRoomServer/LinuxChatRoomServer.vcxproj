@@ -77,11 +77,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ClientMessage.cpp" />
-    <ClCompile Include="SendBroadData.cpp" />
+    <ClCompile Include="ServerMessage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientMessage.h" />
-    <ClInclude Include="SendBroadData.h" />
+    <ClInclude Include="ServerMessage.h" />
   </ItemGroup>
   <ItemDefinitionGroup>
     <Link>

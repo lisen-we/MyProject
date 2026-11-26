@@ -11,11 +11,13 @@
 #include <stdexcept>
 #include <iostream>
 #include "ClientMessage.h"
-#include "SendBroadData.h"
+#include "ServerMessage.h"
 namespace
 {
     constexpr int maxClientCount = 100;
     constexpr int serverport = 9527;
+    // 注册响应沿用 8 字节消息头，正文 1 字节：1 成功，0 失败。
+
     void run_server()
     {
         int server_socket, client_socket;
@@ -90,16 +92,23 @@ namespace
                                     
                                     case ClientCommandType::CreateUserRequest:
                                     {
-                                        // 暂时只记录结果，后续需要向客户端发送响应。
                                         const bool registered = HandleCreateUser(parsed);
                                         std::cout << "Client fd = " << ready_fd
                                                   << (registered ? " registration succeeded" : " registration failed")
                                                   << std::endl;
+                                        // 发送失败时关闭连接，避免客户端收到不完整帧后继续解析。
+                                        if (!SendCreateUserResponse(ready_fd, registered))
+                                            throw std::runtime_error("Failed to send registration response");
                                         break;
                                     }
                                     case ClientCommandType::LoginRequest:
                                     {
-                                        HandleLoginRequest(parsed);
+                                        const bool loggedIn = HandleLoginRequest(parsed);
+                                        clientSession& session = sessions.at(ready_fd);
+                                        session.loggedIn = loggedIn;
+                                        session.account = loggedIn ? parsed.login.account : std::string();
+                                        if (!SendUserLoginResponse(ready_fd, loggedIn))
+                                            throw std::runtime_error("Failed to send login response");
                                         break;
                                     }
                                     case ClientCommandType::GroupChatRequest:
@@ -116,7 +125,7 @@ namespace
                             }
                             catch (const std::runtime_error& error)
                             {
-                                std::cout << "Client fd = " << ready_fd << " protocol error"<<std::endl << std::flush;
+                                std::cout << "Client fd = " << ready_fd << " error: " << error.what() << std::endl << std::flush;
                                 epoll_ctl(epfd, EPOLL_CTL_DEL, ready_fd,nullptr);
                                 close(ready_fd);
                                 sessions.erase(ready_fd);

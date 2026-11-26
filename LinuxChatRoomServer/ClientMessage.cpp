@@ -68,7 +68,7 @@ bool ProcessClientMessage(int client_fd)
             throw std::runtime_error("Registration body is too short");
         break;
     case ClientCommandType::LoginRequest:
-        if (bodySize < 2)
+        if (bodySize < 4)
             throw std::runtime_error("Login body is too short");
         break;
     case ClientCommandType::GroupChatRequest:
@@ -114,10 +114,22 @@ bool ProcessClientMessage(int client_fd)
     }
     case ClientCommandType::LoginRequest:
     {
-        const std::uint16_t length = ReadBigEndian<std::uint16_t>(body);
-        if (length != bodySize - 2)
-            throw std::runtime_error("Invalid nickname length");
-        parsed.login.nickname.assign(body + 2, length);
+        std::size_t offset = 0;
+        auto readField = [&](std::string& field)
+        {
+            if (bodySize - offset < 2)
+                throw std::runtime_error("Missing login field length");
+            const std::size_t length = ReadBigEndian<std::uint16_t>(body + offset);
+            offset += 2;
+            if (length > bodySize - offset)
+                throw std::runtime_error("Invalid login field length");
+            field.assign(body + offset, length);
+            offset += length;
+        };
+        readField(parsed.login.account);
+        readField(parsed.login.password);
+        if (offset != bodySize)
+            throw std::runtime_error("Unexpected login data");
         break;
     }
     case ClientCommandType::GroupChatRequest:
@@ -146,7 +158,39 @@ bool ProcessClientMessage(int client_fd)
 }
 bool HandleLoginRequest(const ParsedClientMessage& parsed)
 {
-
+    const auto& user = parsed.login;
+    if (user.account.empty() || user.account.size() > 64 ||
+        user.password.size() < 8 || user.password.size() > 1024)
+        return false;
+    for (unsigned char ch : user.account)
+        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+              (ch >= '0' && ch <= '9') || ch == '_' || ch == '-'))
+            return false;
+    if (sodium_init() < 0)
+        return false;
+    timeval timeout{1, 0};
+    redisContext* context = redisConnectWithTimeout("127.0.0.1", 6379, timeout);
+    if (!context || context->err)
+    {
+        if (context) redisFree(context);
+        return false;
+    }
+    if (redisSetTimeout(context, timeout) != REDIS_OK)
+    {
+        redisFree(context);
+        return false;
+    }
+    const std::string key = "user:" + user.account;
+    redisReply* reply = static_cast<redisReply*>(redisCommand(context,
+        "HGET %b password_hash", key.data(), key.size()));
+    const bool success = reply &&
+               reply->type == REDIS_REPLY_STRING && 
+               reply->str &&
+               //在redis数据库中保存的是$argon2id$v=19$m=65536,t=2,p=1$c29tZXNhbHQ$YWJjZGVm，crypto_pwhash_str_verify可以自动按照约定的分隔符进行验证
+               crypto_pwhash_str_verify(reply->str, user.password.data(), user.password.size()) == 0; 
+    if (reply) freeReplyObject(reply);
+    redisFree(context);
+    return success;
 }
 bool HandleChatRequest(const ParsedClientMessage& parsed)
 {
