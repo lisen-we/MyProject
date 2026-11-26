@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
+#include <hiredis/hiredis.h>
+#include <sodium.h>
 
 std::unordered_map<int, clientSession> sessions;
 
@@ -61,6 +63,10 @@ bool ProcessClientMessage(int client_fd)
     const std::size_t bodySize = parsed.header.bodyLength;
     switch (parsed.header.type)
     {
+    case ClientCommandType::CreateUserRequest:
+        if (bodySize < 6)
+            throw std::runtime_error("Registration body is too short");
+        break;
     case ClientCommandType::LoginRequest:
         if (bodySize < 2)
             throw std::runtime_error("Login body is too short");
@@ -85,6 +91,27 @@ bool ProcessClientMessage(int client_fd)
     const char* body = buffer.data() + ClientMessageHeaderSize;
     switch (parsed.header.type)
     {
+    case ClientCommandType::CreateUserRequest:
+    {
+        std::size_t offset = 0;
+        auto readField = [&](std::string& field)
+        {
+            if (bodySize - offset < 2)
+                throw std::runtime_error("Missing registration field length");
+            const std::size_t length = ReadBigEndian<std::uint16_t>(body + offset);
+            offset += 2;
+            if (length > bodySize - offset)
+                throw std::runtime_error("Invalid registration field length");
+            field.assign(body + offset, length);
+            offset += length;
+        };
+        readField(parsed.createUser.account);
+        readField(parsed.createUser.password);
+        readField(parsed.createUser.nickname);
+        if (offset != bodySize)
+            throw std::runtime_error("Unexpected registration data");
+        break;
+    }
     case ClientCommandType::LoginRequest:
     {
         const std::uint16_t length = ReadBigEndian<std::uint16_t>(body);
@@ -128,4 +155,78 @@ bool HandleChatRequest(const ParsedClientMessage& parsed)
 bool HandleFileSendRequest(const ParsedClientMessage& parsed)
 {
 
+}
+bool HandleCreateUser(const ParsedClientMessage& parsed)
+{
+    const auto& user = parsed.createUser;
+    // 限制输入大小，账号采用简单的 ASCII 字符集。
+    if (user.account.empty() || user.account.size() > 64 ||
+        user.password.size() < 8 || user.password.size() > 1024 ||
+        user.nickname.empty() || user.nickname.size() > 128)
+        return false;
+    for (unsigned char ch : user.account)
+        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+              (ch >= '0' && ch <= '9') || ch == '_' || ch == '-'))
+            return false;
+    //初始化libsodium密码学库
+    if (sodium_init() < 0)
+        return false;
+    char passwordHash[crypto_pwhash_STRBYTES];
+    if (crypto_pwhash_str_alg(
+        passwordHash,                     // 输出：生成的哈希字符串
+        user.password.data(),             // 输入：用户密码的字节
+        user.password.size(),             // 输入：密码的字节数
+        crypto_pwhash_OPSLIMIT_INTERACTIVE, // 计算量参数
+        crypto_pwhash_MEMLIMIT_INTERACTIVE, // 内存使用量参数
+        crypto_pwhash_ALG_ARGON2ID13       // 使用 Argon2id 算法
+        ) != 0)
+        return false;
+
+    timeval timeout{1, 0}; //表示的值为1秒+0微妙
+    redisContext* context = redisConnectWithTimeout("127.0.0.1", 6379, timeout);
+    if (!context || context->err)
+    {
+        if (context) redisFree(context);
+        return false;
+    }
+    if (redisSetTimeout(context, timeout) != REDIS_OK)
+    {
+        redisFree(context);
+        return false;
+    }
+    // Lua 脚本在 Redis 内原子执行，避免并发注册覆盖已有用户。
+    const char* script = R"(
+        if redis.call('EXISTS', KEYS[1]) == 1 then
+            return 0
+        end
+
+        redis.call('HSET', KEYS[1],
+            'account', ARGV[1],
+            'nickname', ARGV[2],
+            'password_hash', ARGV[3])
+
+        return 1
+    )";
+    const std::string key = "user:" + user.account;
+    //redisCommand 会把C++中的值按顺序传递给Lua脚本
+    /*EVAL% s    1 % b % b % b % s
+        脚本  数量  键名     账号     昵称     密码哈希
+        KEYS[1]  ARGV[1]  ARGV[2]  ARGV[3]*/
+    //%b指的是要求按照指定的字节长度传递数据
+    redisReply* reply = static_cast<redisReply*>(
+        redisCommand(context,
+            "EVAL %s 1 %b %b %b %s",
+            script,
+            key.data(), key.size(),
+            user.account.data(), user.account.size(),
+            user.nickname.data(), user.nickname.size(),
+            passwordHash)
+        );
+    const bool success =
+        reply &&  //检查是否收到了响应
+        reply->type == REDIS_REPLY_INTEGER &&  //检查收到的响应是否为整数
+        reply->integer == 1;  //收到的响应是否为1
+    if (reply) freeReplyObject(reply);
+    redisFree(context);
+    return success;
 }

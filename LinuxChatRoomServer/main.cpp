@@ -57,8 +57,8 @@ namespace
                     const int ready_fd_event = events[i].events;  //接收到的实际事件
                     if (ready_fd == server_socket)
                     {
-                        client_addr_len = sizeof(client_socket);
-                        client_socket = accept(server_socket, (sockaddr*)&client_socket, &client_addr_len);
+                        client_addr_len = sizeof(client_addr);
+                        client_socket = accept(server_socket, (sockaddr*)&client_addr, &client_addr_len);
                         epoll_event client_event{};
                         client_event.data.fd = client_socket;
                         client_event.events = EPOLLIN;
@@ -74,6 +74,7 @@ namespace
                             //读取失败需要将client从epfd实例中删掉
                             epoll_ctl(epfd, EPOLL_CTL_DEL, ready_fd, nullptr);
                             close(ready_fd); 
+                            sessions.erase(ready_fd);
                             continue;
                         }
                         bool result = AppendClientMessage(ready_fd,message, receive_count);
@@ -86,6 +87,16 @@ namespace
                                     const auto& parsed = sessions.at(ready_fd).parsedMessage;
                                     switch (parsed.header.type)
                                     {
+                                    
+                                    case ClientCommandType::CreateUserRequest:
+                                    {
+                                        // 暂时只记录结果，后续需要向客户端发送响应。
+                                        const bool registered = HandleCreateUser(parsed);
+                                        std::cout << "Client fd = " << ready_fd
+                                                  << (registered ? " registration succeeded" : " registration failed")
+                                                  << std::endl;
+                                        break;
+                                    }
                                     case ClientCommandType::LoginRequest:
                                     {
                                         HandleLoginRequest(parsed);
@@ -120,6 +131,6 @@ namespace
 }//namespace
 int main()
 {
-    
+    run_server();
     return 0;
 }

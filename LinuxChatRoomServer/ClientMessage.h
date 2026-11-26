@@ -10,7 +10,8 @@ enum class ClientCommandType : std::uint16_t
 {
     LoginRequest = 1,
     GroupChatRequest = 2,
-    FileChunk = 3
+    FileChunk = 3,
+    CreateUserRequest = 4
 };
 
 constexpr std::uint16_t ClientProtocolVersion = 1;
@@ -32,6 +33,14 @@ struct ClientMessageHeader
 // 昵称长度按 UTF-8 字节数计算。
 struct LoginRequestBody
 {
+    std::string nickname;
+};
+
+// 注册正文依次为账号、密码、昵称，每项由 2 字节大端长度和 UTF-8 字节组成。
+struct CreateUserRequestBody
+{
+    std::string account;
+    std::string password;
     std::string nickname;
 };
 
@@ -58,6 +67,7 @@ struct ParsedClientMessage
 {
     ClientMessageHeader header;
     LoginRequestBody login;
+    CreateUserRequestBody createUser;
     GroupChatRequestBody groupChat;
     FileChunkBody fileChunk;
 };
@@ -75,6 +85,7 @@ struct clientSession
 extern std::unordered_map<int, clientSession> sessions;
 bool AppendClientMessage(int client_fd, char* message,int size);
 bool ProcessClientMessage(int client_fd);
+bool HandleCreateUser(const ParsedClientMessage& parsed);
 bool HandleLoginRequest(const ParsedClientMessage& parsed);
 bool HandleChatRequest(const ParsedClientMessage& parsed);
 bool HandleFileSendRequest(const ParsedClientMessage& parsed);
