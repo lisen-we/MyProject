@@ -200,7 +200,7 @@ bool HandleFileSendRequest(const ParsedClientMessage& parsed)
 {
 
 }
-bool HandleCreateUser(const ParsedClientMessage& parsed)
+bool HandleCreateUserRequest(const ParsedClientMessage& parsed)
 {
     const auto& user = parsed.createUser;
     // 限制输入大小，账号采用简单的 ASCII 字符集。

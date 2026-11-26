@@ -87,7 +87,7 @@ struct clientSession
 extern std::unordered_map<int, clientSession> sessions;
 bool AppendClientMessage(int client_fd, char* message,int size);
 bool ProcessClientMessage(int client_fd);
-bool HandleCreateUser(const ParsedClientMessage& parsed);
+bool HandleCreateUserRequest(const ParsedClientMessage& parsed);
 bool HandleLoginRequest(const ParsedClientMessage& parsed);
 bool HandleChatRequest(const ParsedClientMessage& parsed);
 bool HandleFileSendRequest(const ParsedClientMessage& parsed);

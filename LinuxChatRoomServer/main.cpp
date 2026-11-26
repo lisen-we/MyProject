@@ -92,7 +92,7 @@ namespace
                                     
                                     case ClientCommandType::CreateUserRequest:
                                     {
-                                        const bool registered = HandleCreateUser(parsed);
+                                        const bool registered = HandleCreateUserRequest(parsed);
                                         std::cout << "Client fd = " << ready_fd
                                                   << (registered ? " registration succeeded" : " registration failed")
                                                   << std::endl;

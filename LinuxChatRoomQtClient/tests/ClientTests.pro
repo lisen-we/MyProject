@@ -1,0 +1,8 @@
+QT += widgets network testlib
+CONFIG += console testcase c++11 debug
+CONFIG -= app_bundle debug_and_release build_all
+TARGET = ClientTests
+QMAKE_CXXFLAGS += /utf-8
+INCLUDEPATH += ..
+SOURCES += ClientTests.cpp ../ClientMessage.cpp ../ServerMessage.cpp ../LoginPage.cpp
+HEADERS += ../ClientMessage.h ../ServerMessage.h ../LoginPage.h
