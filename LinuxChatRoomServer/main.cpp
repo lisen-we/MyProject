@@ -67,8 +67,23 @@ namespace
                         epoll_ctl(epfd, EPOLL_CTL_ADD, client_socket, &client_event);
                         sessions.emplace(client_socket, clientSession{});
                     }
-                    else if ((ready_fd_event & EPOLLIN) != 0)
+                    else
                     {
+                        // 广播失败可能已在本轮事件处理中关闭该连接。
+                        if (sessions.find(ready_fd) == sessions.end())
+                            continue;
+                        if ((ready_fd_event & (EPOLLERR | EPOLLHUP)) != 0  //是否包含连接错误或者连接挂断
+                            ||((ready_fd_event & EPOLLOUT) != 0
+                                && !FlushClientSendBuffer(ready_fd, epfd)))
+                        {
+                            //包含EPOLLOUT事件但是更新失败的情况下也需要关闭客户端套接字
+                            epoll_ctl(epfd, EPOLL_CTL_DEL, ready_fd, nullptr);
+                            close(ready_fd);
+                            sessions.erase(ready_fd);
+                            continue;
+                        }
+                        if ((ready_fd_event & EPOLLIN) == 0)
+                            continue;
                         char message[1024] = {};
                         const ssize_t receive_count = read(ready_fd, message, sizeof(message));
                         if (receive_count <= 0)
@@ -96,8 +111,8 @@ namespace
                                         std::cout << "Client fd = " << ready_fd
                                                   << (registered ? " registration succeeded" : " registration failed")
                                                   << std::endl;
-                                        // 发送失败时关闭连接，避免客户端收到不完整帧后继续解析。
-                                        if (!SendCreateUserResponse(ready_fd, registered))
+                                        // 连接出错或发送队列超限时关闭连接。
+                                        if (!SendCreateUserResponse(ready_fd, epfd, registered))
                                             throw std::runtime_error("Failed to send registration response");
                                         break;
                                     }
@@ -107,12 +122,15 @@ namespace
                                         clientSession& session = sessions.at(ready_fd);
                                         session.loggedIn = loggedIn;
                                         session.account = loggedIn ? parsed.login.account : std::string();
-                                        if (!SendUserLoginResponse(ready_fd, loggedIn))
+                                        session.roomId = loggedIn ? DefaultChatRoomId : 0;
+                                        if (!SendUserLoginResponse(ready_fd, epfd, loggedIn))
                                             throw std::runtime_error("Failed to send login response");
                                         break;
                                     }
                                     case ClientCommandType::GroupChatRequest:
                                     {
+                                        if (!HandleChatRequest(ready_fd, epfd, parsed))
+                                            std::cout << "Invalid chat request from fd = " << ready_fd << std::endl;
                                         break;
                                     }
                                     case ClientCommandType::FileChunk:

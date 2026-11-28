@@ -6,3 +6,4 @@ QMAKE_CXXFLAGS += /utf-8
 INCLUDEPATH += ..
 SOURCES += ClientTests.cpp ../ClientMessage.cpp ../ServerMessage.cpp ../LoginPage.cpp
 HEADERS += ../ClientMessage.h ../ServerMessage.h ../LoginPage.h
+FORMS += ../LoginPage.ui

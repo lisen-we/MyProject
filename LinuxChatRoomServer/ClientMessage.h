@@ -17,6 +17,7 @@ enum class ClientCommandType : std::uint16_t
 constexpr std::uint16_t ClientProtocolVersion = 1;
 constexpr std::size_t ClientMessageHeaderSize = 8;
 constexpr std::uint32_t MaxClientMessageBodySize = 256u * 1024u;
+constexpr std::uint32_t DefaultChatRoomId = 1;
 constexpr std::size_t MaxFileChunkDataSize = 64u * 1024u;
 
 // 消息头布局：正文长度（4 字节）、版本（2 字节）、类型（2 字节）。
@@ -75,8 +76,11 @@ struct ParsedClientMessage
 struct clientSession
 {
     bool loggedIn = false;
-    std::string account;
+    std::uint32_t roomId = 0; // 0 表示未加入聊天室。
+    std::string account;      // 用户的账号
 	std::string receiveBuffer;
+    std::string sendBuffer; // 尚未全部发送的数据。
+    std::size_t sendOffset = 0;
     // 每次成功解析后覆盖；业务层应在下一次解析前处理或复制该结果。
     ParsedClientMessage parsedMessage;
 	clientSession()
@@ -89,5 +93,5 @@ bool AppendClientMessage(int client_fd, char* message,int size);
 bool ProcessClientMessage(int client_fd);
 bool HandleCreateUserRequest(const ParsedClientMessage& parsed);
 bool HandleLoginRequest(const ParsedClientMessage& parsed);
-bool HandleChatRequest(const ParsedClientMessage& parsed);
+bool HandleChatRequest(int clientFd, int epollFd, const ParsedClientMessage& parsed);
 bool HandleFileSendRequest(const ParsedClientMessage& parsed);

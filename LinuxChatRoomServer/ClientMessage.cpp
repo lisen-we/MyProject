@@ -1,4 +1,7 @@
 ﻿#include "ClientMessage.h"
+#include "ServerMessage.h"
+#include <sys/epoll.h>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
 #include <cstdint>
@@ -192,9 +195,34 @@ bool HandleLoginRequest(const ParsedClientMessage& parsed)
     redisFree(context);
     return success;
 }
-bool HandleChatRequest(const ParsedClientMessage& parsed)
+bool HandleChatRequest(int clientFd, int epollFd, const ParsedClientMessage& parsed)
 {
+    const auto sender = sessions.find(clientFd);
+    if (sender == sessions.end() || !sender->second.loggedIn ||
+        sender->second.roomId != DefaultChatRoomId ||
+        parsed.groupChat.roomId != sender->second.roomId || parsed.groupChat.text.empty() ||
+        parsed.groupChat.text.size() > MaxClientMessageBodySize - 10 - sender->second.account.size())
+        return false;
 
+    // 连接故障或发送队列超限时清理对应客户端。
+    std::vector<int> failedClients;
+    for (const auto& entry : sessions)
+    {
+        if (entry.first == clientFd || !entry.second.loggedIn ||
+            entry.second.roomId != sender->second.roomId)
+            continue;
+        if (!SendGroupChatMessage(entry.first, epollFd, sender->second.roomId,
+                                  sender->second.account, parsed.groupChat.text))
+            failedClients.push_back(entry.first);
+    }
+    //关闭发送信息失败的socket连接
+    for (int failedFd : failedClients)
+    {
+        epoll_ctl(epollFd, EPOLL_CTL_DEL, failedFd, nullptr);
+        close(failedFd);
+        sessions.erase(failedFd);
+    }
+    return true;
 }
 bool HandleFileSendRequest(const ParsedClientMessage& parsed)
 {

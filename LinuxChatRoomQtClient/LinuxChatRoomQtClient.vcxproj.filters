@@ -47,4 +47,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="LoginPage.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+  </ItemGroup>
 </Project>

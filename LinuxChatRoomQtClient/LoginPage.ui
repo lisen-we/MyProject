@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui version="4.0">
+ <class>LoginPage</class>
+ <widget class="QWidget" name="loginWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>690</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>560</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>聊天室 · 登录与注册</string>
+  </property>
+  <property name="styleSheet">
+   <string>QWidget { font-family: 'Microsoft YaHei UI'; font-size: 14px; color: #26344b; }
+  QWidget#loginWindow { background: #f3f6fb; }
+  QFrame#serverCard { background: white; border: 1px solid #dce3ed; border-radius: 10px; }
+  QLineEdit, QSpinBox { background: white; border: 1px solid #cbd5e1; border-radius: 5px; padding: 6px; }
+  QLineEdit:focus, QSpinBox:focus { border: 1px solid #2563eb; }
+  QPushButton { min-height: 34px; border: 1px solid #cbd5e1; border-radius: 5px; padding: 4px 15px; background: white; }
+  QPushButton:hover { background: #edf3ff; }
+  QPushButton[primary="true"] { background: #2563eb; color: white; border-color: #2563eb; }
+  QPushButton[primary="true"]:hover { background: #1d4ed8; }
+  QPushButton:disabled { background: #e2e8f0; color: #7b879a; border-color: #dce3ed; }
+  QTabWidget::pane { background: white; border: 1px solid #dce3ed; border-radius: 7px; }
+  QTabBar::tab { padding: 12px 32px; color: #64748b; }
+  QTabBar::tab:selected { color: #2563eb; font-weight: bold; border-bottom: 3px solid #2563eb; }</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>18</number>
+   </property>
+   <property name="leftMargin">
+    <number>30</number>
+   </property>
+   <property name="topMargin">
+    <number>26</number>
+   </property>
+   <property name="rightMargin">
+    <number>30</number>
+   </property>
+   <property name="bottomMargin">
+    <number>26</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="titleLabel">
+     <property name="text">
+      <string>连接你的聊天室</string>
+     </property>
+     <property name="styleSheet">
+      <string>font-size: 26px; font-weight: bold;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="subtitleLabel">
+     <property name="text">
+      <string>填写服务器地址，登录账号或创建新账号。</string>
+     </property>
+     <property name="styleSheet">
+      <string>color: #64748b;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="serverCard">
+     <layout class="QVBoxLayout" name="serverLayout">
+      <property name="leftMargin">
+       <number>18</number>
+      </property>
+      <property name="topMargin">
+       <number>16</number>
+      </property>
+      <property name="rightMargin">
+       <number>18</number>
+      </property>
+      <property name="bottomMargin">
+       <number>16</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="serverTitleLabel">
+        <property name="text">
+         <string>服务器连接</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="addressLayout" stretch="1,0,0">
+        <item>
+         <widget class="QLineEdit" name="serverHost">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="placeholderText">
+           <string>服务器 IP 或主机名</string>
+          </property>
+          <property name="maxLength">
+           <number>253</number>
+          </property>
+          <property name="text">
+           <string>127.0.0.1</string>
+          </property>
+          <property name="accessibleName">
+           <string>服务器地址</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="serverPort">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>38</height>
+           </size>
+          </property>
+          <property name="accessibleName">
+           <string>服务器端口</string>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>65535</number>
+          </property>
+          <property name="value">
+           <number>9527</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="connectButton">
+          <property name="text">
+           <string>连接</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QLabel" name="connectionStatus">
+        <property name="text">
+         <string>● 未连接</string>
+        </property>
+        <property name="styleSheet">
+         <string>color: #64748b;</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QStackedWidget" name="pages">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="authPage">
+      <layout class="QVBoxLayout" name="authPageLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QTabWidget" name="authTabs">
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="QWidget" name="loginTab">
+          <attribute name="title">
+           <string>登录</string>
+          </attribute>
+          <layout class="QFormLayout" name="loginForm">
+           <property name="fieldGrowthPolicy">
+            <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+           </property>
+           <property name="verticalSpacing">
+            <number>16</number>
+           </property>
+           <property name="leftMargin">
+            <number>22</number>
+           </property>
+           <property name="topMargin">
+            <number>26</number>
+           </property>
+           <property name="rightMargin">
+            <number>22</number>
+           </property>
+           <property name="bottomMargin">
+            <number>24</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="loginAccountLabel">
+             <property name="text">
+              <string>账号</string>
+             </property>
+             <property name="buddy">
+              <cstring>loginAccount</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="loginAccount">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>38</height>
+              </size>
+             </property>
+             <property name="placeholderText">
+              <string>请输入账号</string>
+             </property>
+             <property name="maxLength">
+              <number>64</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="loginPasswordLabel">
+             <property name="text">
+              <string>密码</string>
+             </property>
+             <property name="buddy">
+              <cstring>loginPassword</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="loginPassword">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>38</height>
+              </size>
+             </property>
+             <property name="placeholderText">
+              <string>请输入密码</string>
+             </property>
+             <property name="maxLength">
+              <number>1024</number>
+             </property>
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QPushButton" name="loginButton">
+             <property name="text">
+              <string>登录</string>
+             </property>
+             <property name="primary" stdset="0">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="registerTab">
+          <attribute name="title">
+           <string>注册账号</string>
+          </attribute>
+          <layout class="QFormLayout" name="registrationForm">
+           <property name="fieldGrowthPolicy">
+            <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+           </property>
+           <property name="verticalSpacing">
+            <number>16</number>
+           </property>
+           <property name="leftMargin">
+            <number>22</number>
+           </property>
+           <property name="topMargin">
+            <number>26</number>
+           </property>
+           <property name="rightMargin">
+            <number>22</number>
+           </property>
+           <property name="bottomMargin">
+            <number>24</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="registerAccountLabel">
+             <property name="text">
+              <string>账号</string>
+             </property>
+             <property name="buddy">
+              <cstring>registerAccount</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="registerAccount">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>38</height>
+              </size>
+             </property>
+             <property name="placeholderText">
+              <string>1–64 位字母、数字、_ 或 -</string>
+             </property>
+             <property name="maxLength">
+              <number>64</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="registerNicknameLabel">
+             <property name="text">
+              <string>昵称</string>
+             </property>
+             <property name="buddy">
+              <cstring>registerNickname</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="registerNickname">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>38</height>
+              </size>
+             </property>
+             <property name="placeholderText">
+              <string>昵称，最多 128 个 UTF-8 字节</string>
+             </property>
+             <property name="maxLength">
+              <number>128</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="registerPasswordLabel">
+             <property name="text">
+              <string>密码</string>
+             </property>
+             <property name="buddy">
+              <cstring>registerPassword</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="registerPassword">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>38</height>
+              </size>
+             </property>
+             <property name="placeholderText">
+              <string>密码，8–1024 个 UTF-8 字节</string>
+             </property>
+             <property name="maxLength">
+              <number>1024</number>
+             </property>
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="confirmPasswordLabel">
+             <property name="text">
+              <string>确认密码</string>
+             </property>
+             <property name="buddy">
+              <cstring>confirmPassword</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="confirmPassword">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>38</height>
+              </size>
+             </property>
+             <property name="placeholderText">
+              <string>再次输入密码</string>
+             </property>
+             <property name="maxLength">
+              <number>1024</number>
+             </property>
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0" colspan="2">
+            <widget class="QPushButton" name="registerButton">
+             <property name="text">
+              <string>创建账号</string>
+             </property>
+             <property name="primary" stdset="0">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="loggedInPage">
+      <layout class="QVBoxLayout" name="successLayout">
+       <item>
+        <spacer name="successTopSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="successTitleLabel">
+         <property name="text">
+          <string>登录成功</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="styleSheet">
+          <string>font-size: 24px; color: #15803d; font-weight: bold;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="currentAccount">
+         <property name="text">
+          <string></string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="successDescriptionLabel">
+         <property name="text">
+          <string>欢迎回来，已与聊天室服务器建立连接。</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="successButtonSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>0</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="returnToLoginButton">
+         <property name="text">
+          <string>断开连接，返回登录</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="successBottomSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="requestStatus">
+     <property name="text">
+      <string>点击登录或注册时，会自动连接服务器。</string>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>48</height>
+      </size>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="bottomSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>serverHost</tabstop>
+  <tabstop>serverPort</tabstop>
+  <tabstop>connectButton</tabstop>
+  <tabstop>authTabs</tabstop>
+  <tabstop>loginAccount</tabstop>
+  <tabstop>loginPassword</tabstop>
+  <tabstop>loginButton</tabstop>
+  <tabstop>registerAccount</tabstop>
+  <tabstop>registerNickname</tabstop>
+  <tabstop>registerPassword</tabstop>
+  <tabstop>confirmPassword</tabstop>
+  <tabstop>registerButton</tabstop>
+  <tabstop>returnToLoginButton</tabstop>
+ </tabstops>
+ <resources />
+ <connections />
+</ui>
